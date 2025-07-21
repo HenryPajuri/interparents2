@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Dashboard - INTERPARENTS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="/html/index.html" style="color: inherit; text-decoration: none;">INTERPARENTS</a>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="/html/index.html#home">Home</a></li>
+                        <li><a href="/html/index.html#mission">Mission</a></li>
+                        <li class="dropdown">
+                            <a href="/html/index.html#members" class="dropdown-toggle">Members</a>
+                            <ul class="dropdown-menu">
+                                <li><a href="/html/index.html#members">Parent Association Member Schools</a></li>
+                                <li><a href="/html/members.html">Key Members of the Association</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="/html/index.html#communications">Communications</a></li>
+                        <li><a href="#" id="logoutBtn">Logout</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="dashboard-hero">
+        <div class="container">
+            <h1>Welcome to the Member Dashboard</h1>
+            <p class="user-greeting" id="userGreeting">Loading...</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="dashboard-content">
+            <div class="user-info-card" id="userInfoCard">
+                <h2>Your Profile</h2>
+                <div class="loading">Loading your information...</div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <h3>📋 Recent Communications</h3>
+                    <p>Access the latest reports and memos from INTERPARENTS meetings and committees.</p>
+                    <a href="/html/index.html#communications" class="card-button">View Communications</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>🏫 Member Schools</h3>
+                    <p>Browse information about all European Schools in the INTERPARENTS network.</p>
+                    <a href="/html/index.html#members" class="card-button">View Schools</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>👥 Association Leadership</h3>
+                    <p>Meet the key members and leadership team of INTERPARENTS.</p>
+                    <a href="/html/members.html" class="card-button">View Leadership</a>
+                </div>
+
+                <div class="dashboard-card admin-only" id="adminCard" style="display: none;">
+                    <h3>⚙️ Admin Panel</h3>
+                    <p>Manage communications, upload PDFs, and configure INTERPARENTS settings.</p>
+                    <a href="/html/admin.html" class="card-button" id="adminPanelBtn">Access Admin Panel</a>
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <h2>Quick Actions</h2>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="window.open('mailto:box@interparents.eu')">
+                        📧 Contact Support
+                    </button>
+                    <button class="action-btn" onclick="window.location.href='/pdf/statutes2008.pdf'">
+                        📄 View Statutes
+                    </button>
+                    <button class="action-btn" onclick="window.open('https://www.eursc.eu/en/Office/mission')">
+                        🏛️ European Schools Office
+                    </button>
+                    <button class="action-btn admin-only" id="uploadBtn" style="display: none;"
+                        onclick="window.location.href='/html/admin.html'">
+                        📤 Upload Communications
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 INTERPARENTS - European Schools Parent Association. All rights reserved.</p>
+            <p>Member Dashboard | <a href="mailto:communications@interparents.eu" style="color: #3498db;">Technical
+                    Support</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // Dashboard functionality
+        class Dashboard {
+            constructor() {
+                this.API_BASE = '/api';
+                this.user = null;
+                this.init();
+            }
+
+            async init() {
+                await this.loadUserInfo();
+                this.bindEvents();
+            }
+
+            async loadUserInfo() {
+                try {
+                    const response = await fetch(`${this.API_BASE}/auth/me`, {
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success) {
+                            this.user = data.user;
+                            this.updateUI();
+                        } else {
+                            this.redirectToLogin();
+                        }
+                    } else {
+                        this.redirectToLogin();
+                    }
+                } catch (error) {
+                    console.error('Error loading user info:', error);
+                    this.redirectToLogin();
+                }
+            }
+
+            updateUI() {
+                // Update greeting
+                const greeting = document.getElementById('userGreeting');
+                greeting.textContent = `Welcome back, ${this.user.name}!`;
+
+                // Update user info card
+                const userCard = document.getElementById('userInfoCard');
+                userCard.innerHTML = `
+                    <h2>Your Profile</h2>
+                    <div class="user-details">
+                        <div class="detail-row">
+                            <span class="label">Name:</span>
+                            <span class="value">${this.user.name}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Email:</span>
+                            <span class="value">${this.user.email}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Role:</span>
+                            <span class="value role-${this.user.role}">${this.capitalizeRole(this.user.role)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">School:</span>
+                            <span class="value">${this.user.school}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Position:</span>
+                            <span class="value">${this.user.position}</span>
+                        </div>
+                        ${this.user.lastLogin ? `
+                        <div class="detail-row">
+                            <span class="label">Last Login:</span>
+                            <span class="value">${new Date(this.user.lastLogin).toLocaleString()}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                // Show admin features if user has admin or executive role
+                if (this.user.role === 'admin' || this.user.role === 'executive') {
+                    document.getElementById('adminCard').style.display = 'block';
+                    document.getElementById('uploadBtn').style.display = 'block';
+                }
+            }
+
+            capitalizeRole(role) {
+                if (role === 'admin') return 'Administrator';
+                if (role === 'executive') return 'Executive Member';
+                return 'Member';
+            }
+
+            bindEvents() {
+                // Logout button
+                document.getElementById('logoutBtn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.logout();
+                });
+
+                // Add proper cache control headers via JavaScript
+                this.setCacheHeaders();
+            }
+
+            setCacheHeaders() {
+                // Prevent caching of this authenticated page
+                if ('serviceWorker' in navigator) {
+                    // Clear any cached versions
+                    caches.keys().then(names => {
+                        names.forEach(name => {
+                            caches.delete(name);
+                        });
+                    });
+                }
+            }
+
+            async logout() {
+                try {
+                    const response = await fetch(`${this.API_BASE}/auth/logout`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+
+                    // Clear session storage
+                    sessionStorage.clear();
+
+                    // Redirect to login
+                    window.location.href = '/html/login.html';
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    // Force redirect even if logout request fails
+                    sessionStorage.clear();
+                    window.location.href = '/html/login.html';
+                }
+            }
+
+            redirectToLogin() {
+                sessionStorage.clear();
+                window.location.href = '/html/login.html';
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            new Dashboard();
+        });
+    </script>
+</body>
+
+</html>

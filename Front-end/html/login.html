@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - INTERPARENTS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo-large">
+                    <a href="/html/index.html" style="color: inherit; text-decoration: none;">
+                        INTERPARENTS
+                    </a>
+                </div>
+                <h1>Member Login</h1>
+                <p>Access the INTERPARENTS member portal</p>
+            </div>
+
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        required 
+                        placeholder="your.email@interparents.eu"
+                        autocomplete="email"
+                    >
+                    <span class="form-error" id="emailError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-input">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            required 
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            minlength="6"
+                        >
+                        <button type="button" class="password-toggle" id="passwordToggle">
+                            <span class="toggle-text">Show</span>
+                        </button>
+                    </div>
+                    <span class="form-error" id="passwordError"></span>
+                </div>
+
+                <button type="submit" class="login-button" id="loginButton">
+                    <span class="button-text">Sign In</span>
+                    <span class="button-spinner" id="loginSpinner">
+                        <div class="spinner"></div>
+                    </span>
+                </button>
+
+                <div class="login-message" id="loginMessage"></div>
+            </form>
+
+            <div class="login-footer">
+                <div class="login-help">
+                    <p>Need access? Contact your local parent association representative.</p>
+                    <p>For technical support: <a href="mailto:communications@interparents.eu">communications@interparents.eu</a></p>
+                </div>
+                
+                <div class="demo-credentials" id="demoCredentials">
+                    <h4>Demo Accounts (Development)</h4>
+                    <div class="demo-grid">
+                        <div class="demo-account">
+                            <strong>Admin Access:</strong><br>
+                            <code>admin@interparents.eu</code><br>
+                            <code>admin123</code>
+                        </div>
+                        <div class="demo-account">
+                            <strong>Executive Access:</strong><br>
+                            <code>president@interparents.eu</code><br>
+                            <code>president123</code>
+                        </div>
+                        <div class="demo-account">
+                            <strong>Member Access:</strong><br>
+                            <code>brussels1@interparents.eu</code><br>
+                            <code>member123</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="login-background">
+        <div class="bg-element bg-element-1"></div>
+        <div class="bg-element bg-element-2"></div>
+        <div class="bg-element bg-element-3"></div>
+    </div>
+
+    <script src="/js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Admin Panel - INTERPARENTS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="/html/index.html" style="color: inherit; text-decoration: none;">INTERPARENTS</a>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="/html/dashboard.html">Dashboard</a></li>
+                        <li><a href="/html/index.html#home">Home</a></li>
+                        <li><a href="/html/index.html#mission">Mission</a></li>
+                        <li><a href="/html/index.html#communications">Communications</a></li>
+                        <li><a href="#" id="logoutBtn">Logout</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="dashboard-hero">
+        <div class="container">
+            <h1>Administration Panel</h1>
+            <p class="user-greeting" id="userGreeting">Loading...</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="admin-content">
+            <div id="messageContainer"></div>
+
+            <div class="admin-tabs">
+                <button class="admin-tab active" data-tab="communications">📄 Manage Communications</button>
+                <button class="admin-tab" data-tab="users" id="usersTab">👥 Manage Users</button>
+            </div>
+
+            <!-- Communications Tab -->
+            <div id="communications" class="tab-content active">
+                <div class="upload-form">
+                    <h3>Upload New Communication</h3>
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="title">Title *</label>
+                                <input type="text" id="title" name="title" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="category">Category *</label>
+                                <select id="category" name="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="JTC">Joint Teaching Committee</option>
+                                    <option value="BOG">Board of Governors</option>
+                                    <option value="Policy">Policy Document</option>
+                                    <option value="Report">Report</option>
+                                    <option value="Memo">Memo</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Description *</label>
+                            <textarea id="description" name="description" required placeholder="Brief description of the communication..."></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="publishDate">Publish Date</label>
+                                <input type="date" id="publishDate" name="publishDate">
+                            </div>
+                            <div class="form-group">
+                                <label>PDF File *</label>
+                                <label for="pdfFile" class="file-input">
+                                    <input type="file" id="pdfFile" name="pdf" accept=".pdf" required>
+                                    Choose PDF File
+                                </label>
+                                <div id="fileStatus" class="file-status" style="display: none;"></div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="upload-btn" id="uploadBtn">
+                            <span id="uploadBtnText">Upload Communication</span>
+                            <span id="uploadSpinner" style="display: none;">
+                                <div class="spinner"></div>
+                                Uploading...
+                            </span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="communications-table">
+                    <div class="table-header">
+                        <h3>Existing Communications</h3>
+                        <input type="text" id="searchInput" class="search-box" placeholder="Search communications...">
+                    </div>
+                    <div class="table-container">
+                        <table class="comm-table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Category</th>
+                                    <th>Publish Date</th>
+                                    <th>Uploaded By</th>
+                                    <th>File Size</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="communicationsTableBody">
+                                <tr>
+                                    <td colspan="6" class="loading">
+                                        <div class="spinner"></div>
+                                        Loading communications...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users" class="tab-content">
+                <div class="upload-form">
+                    <h3>Add New User</h3>
+                    <form id="userForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userName">Full Name *</label>
+                                <input type="text" id="userName" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="userEmail">Email Address *</label>
+                                <input type="email" id="userEmail" name="email" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userPassword">Password *</label>
+                                <input type="password" id="userPassword" name="password" required minlength="6" placeholder="Minimum 6 characters">
+                            </div>
+                            <div class="form-group">
+                                <label for="userRole">Role *</label>
+                                <select id="userRole" name="role" required>
+                                    <option value="">Select Role</option>
+                                    <option value="member">Member</option>
+                                    <option value="executive">Executive</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userSchool">School *</label>
+                                <select id="userSchool" name="school" required>
+                                    <option value="">Select School</option>
+                                    <option value="Brussels I (Uccle)">Brussels I (Uccle)</option>
+                                    <option value="Brussels II (Woluwe)">Brussels II (Woluwe)</option>
+                                    <option value="Brussels III (Ixelles)">Brussels III (Ixelles)</option>
+                                    <option value="Brussels IV (Laeken)">Brussels IV (Laeken)</option>
+                                    <option value="Frankfurt">Frankfurt</option>
+                                    <option value="Karlsruhe">Karlsruhe</option>
+                                    <option value="Munich">Munich</option>
+                                    <option value="Luxembourg I">Luxembourg I</option>
+                                    <option value="Luxembourg II">Luxembourg II</option>
+                                    <option value="Varese">Varese</option>
+                                    <option value="Alicante">Alicante</option>
+                                    <option value="Bergen">Bergen</option>
+                                    <option value="Mol">Mol</option>
+                                    <option value="INTERPARENTS Central">INTERPARENTS Central</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="userPosition">Position</label>
+                                <input type="text" id="userPosition" name="position" placeholder="Parent Representative">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="upload-btn" id="userSubmitBtn">
+                            <span id="userSubmitBtnText">Add User</span>
+                            <span id="userSubmitSpinner" style="display: none;">
+                                <div class="spinner"></div>
+                                Adding User...
+                            </span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="communications-table">
+                    <div class="table-header">
+                        <h3>Existing Users</h3>
+                        <input type="text" id="userSearchInput" class="search-box" placeholder="Search users...">
+                    </div>
+                    <div class="table-container">
+                        <table class="comm-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>School</th>
+                                    <th>Position</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="6" class="loading">
+                                        <div class="spinner"></div>
+                                        Loading users...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Communication Modal -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Confirm Deletion</h3>
+            <p>Are you sure you want to delete this communication? This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="hideDeleteModal()">Cancel</button>
+                <button class="btn-confirm" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete User Modal -->
+    <div id="deleteUserModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Confirm User Deletion</h3>
+            <p>Are you sure you want to delete this user? This action cannot be undone and will permanently remove their access.</p>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="hideDeleteUserModal()">Cancel</button>
+                <button class="btn-confirm" id="confirmDeleteUserBtn">Delete User</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 INTERPARENTS - European Schools Parent Association. All rights reserved.</p>
+            <p>Administration Panel | <a href="mailto:communications@interparents.eu" style="color: #3498db;">Technical Support</a></p>
+        </div>
+    </footer>
+
+    <script src="/js/admin.js"></script>
+</body>
+</html>
