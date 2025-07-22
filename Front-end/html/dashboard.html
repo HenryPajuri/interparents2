@@ -108,10 +108,11 @@
     </footer>
 
     <script>
-        // Dashboard functionality
-        class Dashboard {
+       // Dashboard functionality
+       class Dashboard {
             constructor() {
-                this.API_BASE = '/api';
+                // ✅ Fixed: Use correct backend API URL
+                this.API_BASE = 'https://interparents-1.onrender.com/api';
                 this.user = null;
                 this.init();
             }
@@ -244,11 +245,6 @@
                 window.location.href = 'login.html';
             }
         }
-
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', () => {
-            new Dashboard();
-        });
     </script>
 </body>
 
