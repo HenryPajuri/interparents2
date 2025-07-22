@@ -17,20 +17,20 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <a href="/html/index.html" style="color: inherit; text-decoration: none;">INTERPARENTS</a>
+                    <a href="index.html" style="color: inherit; text-decoration: none;">INTERPARENTS</a>
                 </div>
                 <nav>
                     <ul>
-                        <li><a href="/html/index.html#home">Home</a></li>
-                        <li><a href="/html/index.html#mission">Mission</a></li>
+                        <li><a href="index.html#home">Home</a></li>
+                        <li><a href="index.html#mission">Mission</a></li>
                         <li class="dropdown">
-                            <a href="/html/index.html#members" class="dropdown-toggle">Members</a>
+                            <a href="index.html#members" class="dropdown-toggle">Members</a>
                             <ul class="dropdown-menu">
-                                <li><a href="/html/index.html#members">Parent Association Member Schools</a></li>
-                                <li><a href="/html/members.html">Key Members of the Association</a></li>
+                                <li><a href="index.html#members">Parent Association Member Schools</a></li>
+                                <li><a href="members.html">Key Members of the Association</a></li>
                             </ul>
                         </li>
-                        <li><a href="/html/index.html#communications">Communications</a></li>
+                        <li><a href="index.html#communications">Communications</a></li>
                         <li><a href="#" id="logoutBtn">Logout</a></li>
                     </ul>
                 </nav>
@@ -56,25 +56,25 @@
                 <div class="dashboard-card">
                     <h3>📋 Recent Communications</h3>
                     <p>Access the latest reports and memos from INTERPARENTS meetings and committees.</p>
-                    <a href="/html/index.html#communications" class="card-button">View Communications</a>
+                    <a href="index.html#communications" class="card-button">View Communications</a>
                 </div>
 
                 <div class="dashboard-card">
                     <h3>🏫 Member Schools</h3>
                     <p>Browse information about all European Schools in the INTERPARENTS network.</p>
-                    <a href="/html/index.html#members" class="card-button">View Schools</a>
+                    <a href="index.html#members" class="card-button">View Schools</a>
                 </div>
 
                 <div class="dashboard-card">
                     <h3>👥 Association Leadership</h3>
                     <p>Meet the key members and leadership team of INTERPARENTS.</p>
-                    <a href="/html/members.html" class="card-button">View Leadership</a>
+                    <a href="members.html" class="card-button">View Leadership</a>
                 </div>
 
                 <div class="dashboard-card admin-only" id="adminCard" style="display: none;">
                     <h3>⚙️ Admin Panel</h3>
                     <p>Manage communications, upload PDFs, and configure INTERPARENTS settings.</p>
-                    <a href="/html/admin.html" class="card-button" id="adminPanelBtn">Access Admin Panel</a>
+                    <a href="admin.html" class="card-button" id="adminPanelBtn">Access Admin Panel</a>
                 </div>
             </div>
 
@@ -91,7 +91,7 @@
                         🏛️ European Schools Office
                     </button>
                     <button class="action-btn admin-only" id="uploadBtn" style="display: none;"
-                        onclick="window.location.href='/html/admin.html'">
+                        onclick="window.location.href='admin.html'">
                         📤 Upload Communications
                     </button>
                 </div>
@@ -230,18 +230,18 @@
                     sessionStorage.clear();
 
                     // Redirect to login
-                    window.location.href = '/html/login.html';
+                    window.location.href = 'login.html';
                 } catch (error) {
                     console.error('Logout error:', error);
                     // Force redirect even if logout request fails
                     sessionStorage.clear();
-                    window.location.href = '/html/login.html';
+                    window.location.href = 'login.html';
                 }
             }
 
             redirectToLogin() {
                 sessionStorage.clear();
-                window.location.href = '/html/login.html';
+                window.location.href = 'login.html';
             }
         }
 
