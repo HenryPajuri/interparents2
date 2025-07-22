@@ -46,7 +46,7 @@ class AdminPanel {
         if (this.user.role !== 'admin' && this.user.role !== 'executive') {
             this.showMessage('Access denied. Admin or Executive privileges required.', 'error');
             setTimeout(() => {
-                window.location.href = '/html/dashboard.html';
+                window.location.href = 'dashboard.html';
             }, 2000);
             return;
         }
@@ -542,13 +542,13 @@ class AdminPanel {
             console.error('Logout error:', error);
         } finally {
             sessionStorage.clear();
-            window.location.href = '/html/login.html';
+            window.location.href = 'login.html';
         }
     }
 
     redirectToLogin() {
         sessionStorage.clear();
-        window.location.href = '/html/login.html';
+        window.location.href = 'login.html';
     }
 
     // Password Change Methods
