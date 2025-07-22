@@ -100,7 +100,8 @@ window.addEventListener('scroll', function() {
 // Communications Manager for Homepage
 class CommunicationsManager {
     constructor() {
-        this.API_BASE = '/api';
+        // ✅ Updated to use full API URL
+        this.API_BASE = 'https://interparents-1.onrender.com/api';
         this.communications = [];
         this.init();
     }
@@ -114,7 +115,10 @@ class CommunicationsManager {
             // Show loading state
             this.showLoading();
 
-            const response = await fetch(`${this.API_BASE}/communications`);
+            // ✅ Added credentials include for cross-origin requests
+            const response = await fetch(`${this.API_BASE}/communications`, {
+                credentials: 'include'
+            });
             
             if (response.ok) {
                 const data = await response.json();
@@ -304,7 +308,8 @@ class CommunicationsManager {
 
 class AuthStateManager {
     constructor() {
-        this.API_BASE = '/api';
+        // ✅ Updated to use full API URL
+        this.API_BASE = 'https://interparents-1.onrender.com/api';
         this.user = null;
         this.init();
     }
@@ -316,6 +321,7 @@ class AuthStateManager {
 
     async checkAuthState() {
         try {
+            // ✅ Already had credentials include - perfect!
             const response = await fetch(`${this.API_BASE}/auth/me`, {
                 credentials: 'include'
             });
@@ -358,6 +364,7 @@ class AuthStateManager {
 
     async logout() {
         try {
+            // ✅ Added credentials include for logout
             await fetch(`${this.API_BASE}/auth/logout`, {
                 method: 'POST',
                 credentials: 'include'
