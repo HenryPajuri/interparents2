@@ -248,10 +248,19 @@ const adminAuth = (req, res, next) => {
     next();
 };
 
-// File upload configuration
+// File upload configuration - UPDATED for Render
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, '/app/pdf/') // This will be the PDF directory in the container
+        // Use relative path instead of absolute path
+        const uploadDir = path.join(__dirname, 'pdf');
+        
+        // Ensure directory exists
+        const fs = require('fs');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        
+        cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
         // Generate unique filename while preserving extension
@@ -277,7 +286,6 @@ const upload = multer({
         fileSize: 10 * 1024 * 1024 // 10MB limit
     }
 });
-
 // Routes
 
 // Login route with fixed cookie settings for cross-origin
@@ -528,8 +536,8 @@ app.delete('/api/communications/:id', auth, adminAuth, async (req, res) => {
             });
         }
 
-        // Delete the physical file
-        const filePath = `/app/pdf/${communication.filename}`;
+        // ✅ Update this path to match the new multer destination
+        const filePath = path.join(__dirname, 'pdf', communication.filename);
         try {
             await fs.unlink(filePath);
         } catch (fileError) {
