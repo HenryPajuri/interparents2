@@ -45,7 +45,24 @@ app.use(cors({
     origin: process.env.FRONTEND_URL || 'https://interparentsfrontend.onrender.com',
     credentials: true
 }));
+// Add this code to your server.js after CORS configuration and before your routes
 
+// Serve PDF files statically
+app.use('/pdf', express.static(path.join(__dirname, 'pdf'), {
+    setHeaders: (res, filePath) => {
+        // Set proper headers for PDF files
+        if (filePath.endsWith('.pdf')) {
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'inline'); // Display in browser instead of download
+        }
+    }
+}));
+
+// Also serve static files for any other assets you might have
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
+
+// Your existing routes start here...
+// Login route, etc.
 // MongoDB connection
 const connectDB = async () => {
     try {
