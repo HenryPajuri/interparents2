@@ -3,7 +3,6 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
-// Communication Schema (same as in server.js)
 const communicationSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -52,7 +51,6 @@ const communicationSchema = new mongoose.Schema({
     }
 });
 
-// User Schema (simplified for this script)
 const userSchema = new mongoose.Schema({
     email: String,
     name: String,
@@ -62,7 +60,6 @@ const userSchema = new mongoose.Schema({
 const Communication = mongoose.model('Communication', communicationSchema);
 const User = mongoose.model('User', userSchema);
 
-// Existing communications data (from the original HTML)
 const existingCommunications = [
     {
         title: "Joint Teaching Committee Report",
@@ -114,7 +111,6 @@ const existingCommunications = [
     }
 ];
 
-// Helper function to get file size (mock if file doesn't exist)
 function getFileSize(filename) {
     const pdfPath = path.join(__dirname, '..', 'pdf', filename);
     try {
@@ -122,14 +118,12 @@ function getFileSize(filename) {
         return stats.size;
     } catch (error) {
         console.warn(`File ${filename} not found, using estimated size`);
-        // Return estimated sizes based on typical PDF sizes
         return Math.floor(Math.random() * (2000000 - 500000) + 500000); // 500KB to 2MB
     }
 }
 
 const migrateCommunications = async () => {
     try {
-        // Connect to MongoDB
         await mongoose.connect(process.env.MONGODB_URI || 'mongodb://mongodb:27017/interparents', {
             useNewUrlParser: true,
             useUnifiedTopology: true,
@@ -137,7 +131,6 @@ const migrateCommunications = async () => {
         
         console.log('Connected to MongoDB');
 
-        // Find the admin user to assign as uploader
         const adminUser = await User.findOne({ role: 'admin' });
         if (!adminUser) {
             console.error('No admin user found. Please run the user seeding script first.');
@@ -146,7 +139,6 @@ const migrateCommunications = async () => {
 
         console.log(`Using admin user: ${adminUser.name} (${adminUser.email})`);
 
-        // Clear existing communications
         const existingCount = await Communication.countDocuments();
         if (existingCount > 0) {
             console.log(`Found ${existingCount} existing communications`);
@@ -161,7 +153,6 @@ const migrateCommunications = async () => {
             console.log('Cleared existing communications');
         }
 
-        // Migrate each communication
         console.log('\n📄 Migrating Communications:');
         console.log('='.repeat(50));
 
@@ -189,13 +180,12 @@ const migrateCommunications = async () => {
             }
         }
 
-        // Summary
+
         const finalCount = await Communication.countDocuments();
         console.log('='.repeat(50));
         console.log(`✅ Migration completed successfully!`);
         console.log(`📊 Total communications in database: ${finalCount}`);
 
-        // List all communications with details
         console.log('\n📋 Communications Summary:');
         const allComms = await Communication.find().populate('uploadedBy', 'name email').sort({ publishDate: -1 });
         
@@ -218,6 +208,5 @@ const migrateCommunications = async () => {
     }
 };
 
-// Run the migration
 console.log('🚀 Starting Communications Migration...\n');
 migrateCommunications();

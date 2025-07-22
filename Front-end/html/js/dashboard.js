@@ -36,7 +36,7 @@ class Dashboard {
                 }
             } else {
                 console.log('Response not ok, status:', response.status);
-                // Try to get error text
+        
                 const errorText = await response.text();
                 console.log('Error response text:', errorText);
                 this.redirectToLogin();
@@ -51,7 +51,6 @@ class Dashboard {
     updateUI() {
         console.log('Updating UI with user:', this.user);
         
-        // Update greeting
         const greeting = document.getElementById('userGreeting');
         if (greeting) {
             greeting.textContent = `Welcome back, ${this.user.name}!`;
@@ -60,7 +59,6 @@ class Dashboard {
             console.error('Greeting element not found');
         }
 
-        // Update user info card
         const userCard = document.getElementById('userInfoCard');
         if (userCard) {
             userCard.innerHTML = `
@@ -99,7 +97,6 @@ class Dashboard {
             console.error('User info card element not found');
         }
 
-        // Show admin features if user has admin or executive role
         if (this.user.role === 'admin' || this.user.role === 'executive') {
             console.log('User has admin/executive role, showing admin features');
             
@@ -133,7 +130,6 @@ class Dashboard {
     bindEvents() {
         console.log('Binding events...');
         
-        // Logout button
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
@@ -146,14 +142,11 @@ class Dashboard {
             console.error('Logout button not found');
         }
 
-        // Add proper cache control headers via JavaScript
         this.setCacheHeaders();
     }
 
     setCacheHeaders() {
-        // Prevent caching of this authenticated page
         if ('serviceWorker' in navigator) {
-            // Clear any cached versions
             caches.keys().then(names => {
                 names.forEach(name => {
                     caches.delete(name);
@@ -193,7 +186,6 @@ class Dashboard {
     }
 }
 
-// Initialize dashboard
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing dashboard...');
     new Dashboard();

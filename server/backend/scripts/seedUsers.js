@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-// User Schema (same as in server.js)
 const userSchema = new mongoose.Schema({
     email: {
         type: String,
@@ -61,7 +60,6 @@ userSchema.pre('save', async function(next) {
 
 const User = mongoose.model('User', userSchema);
 
-// Initial users data
 const initialUsers = [
     {
         email: 'admin@interparents.eu',
@@ -171,7 +169,6 @@ const initialUsers = [
 
 const seedUsers = async () => {
     try {
-        // Connect to MongoDB
         await mongoose.connect(process.env.MONGODB_URI || 'mongodb://mongodb:27017/interparents', {
             useNewUrlParser: true,
             useUnifiedTopology: true,
@@ -179,11 +176,9 @@ const seedUsers = async () => {
         
         console.log('Connected to MongoDB');
 
-        // Clear existing users
         await User.deleteMany({});
         console.log('Cleared existing users');
 
-        // Create new users
         for (const userData of initialUsers) {
             const user = new User(userData);
             await user.save();
@@ -194,7 +189,6 @@ const seedUsers = async () => {
         console.log('\n📋 Login Credentials:');
         console.log('='.repeat(50));
         
-        // Group users by role for better display
         const adminUsers = initialUsers.filter(u => u.role === 'admin');
         const executiveUsers = initialUsers.filter(u => u.role === 'executive');
         const memberUsers = initialUsers.filter(u => u.role === 'member');
@@ -233,5 +227,4 @@ const seedUsers = async () => {
     }
 };
 
-// Run the seeding
 seedUsers();

@@ -1,7 +1,6 @@
 // Admin Panel JavaScript
 class AdminPanel {
     constructor() {
-        // ✅ Fixed: Use correct backend API URL
         this.API_BASE = 'https://interparents-1.onrender.com/api';
         this.user = null;
         this.communications = [];
@@ -59,13 +58,11 @@ class AdminPanel {
     }
 
     bindEvents() {
-        // Logout
         document.getElementById('logoutBtn').addEventListener('click', (e) => {
             e.preventDefault();
             this.logout();
         });
 
-        // Change password button (add this to admin header)
         const changePasswordBtn = document.getElementById('changePasswordBtn');
         if (changePasswordBtn) {
             changePasswordBtn.addEventListener('click', (e) => {
@@ -74,7 +71,6 @@ class AdminPanel {
             });
         }
 
-        // Password form
         const passwordForm = document.getElementById('passwordChangeForm');
         if (passwordForm) {
             passwordForm.addEventListener('submit', (e) => {
@@ -82,36 +78,29 @@ class AdminPanel {
             });
         }
 
-        // File input change
         document.getElementById('pdfFile').addEventListener('change', (e) => {
             this.handleFileChange(e);
         });
 
-        // Make file input clickable
         document.querySelector('.file-input').addEventListener('click', () => {
             document.getElementById('pdfFile').click();
         });
 
-        // Upload form
         document.getElementById('uploadForm').addEventListener('submit', (e) => {
             this.handleUpload(e);
         });
 
-        // Search
         document.getElementById('searchInput').addEventListener('input', (e) => {
             this.filterCommunications(e.target.value);
         });
 
-        // User search
         document.getElementById('userSearchInput').addEventListener('input', (e) => {
             this.filterUsers(e.target.value);
         });
 
-        // User form
         document.getElementById('userForm').addEventListener('submit', (e) => {
             this.handleUserCreate(e);
         });
-
         // Set default publish date to today
         document.getElementById('publishDate').valueAsDate = new Date();
     }
@@ -142,7 +131,7 @@ class AdminPanel {
     handleFileChange(e) {
         const file = e.target.files[0];
         const status = document.getElementById('fileStatus');
-        
+
         if (!file) {
             status.style.display = 'none';
             return;
@@ -168,13 +157,12 @@ class AdminPanel {
 
     async handleUpload(e) {
         e.preventDefault();
-        
+
         const formData = new FormData(e.target);
         const uploadBtn = document.getElementById('uploadBtn');
         const uploadBtnText = document.getElementById('uploadBtnText');
         const uploadSpinner = document.getElementById('uploadSpinner');
 
-        // Disable button and show spinner
         uploadBtn.disabled = true;
         uploadBtnText.style.display = 'none';
         uploadSpinner.style.display = 'inline-flex';
@@ -202,7 +190,6 @@ class AdminPanel {
             console.error('Upload error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         } finally {
-            // Re-enable button and hide spinner
             uploadBtn.disabled = false;
             uploadBtnText.style.display = 'inline';
             uploadSpinner.style.display = 'none';
@@ -277,7 +264,7 @@ class AdminPanel {
             return;
         }
 
-        const filtered = this.communications.filter(comm => 
+        const filtered = this.communications.filter(comm =>
             comm.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             comm.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
             comm.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -289,12 +276,10 @@ class AdminPanel {
     showDeleteModal(id, title) {
         this.currentDeleteId = id;
         document.getElementById('deleteModal').classList.add('show');
-        
-        // Update modal content
+
         const modal = document.querySelector('#deleteModal .modal p');
         modal.innerHTML = `Are you sure you want to delete "<strong>${title}</strong>"? This action cannot be undone.`;
-        
-        // Bind confirm button
+
         document.getElementById('confirmDeleteBtn').onclick = () => this.confirmDelete();
     }
 
@@ -352,15 +337,14 @@ class AdminPanel {
 
     async handleUserCreate(e) {
         e.preventDefault();
-        
+
         const formData = new FormData(e.target);
         const userData = Object.fromEntries(formData.entries());
-        
+
         const submitBtn = document.getElementById('userSubmitBtn');
         const submitBtnText = document.getElementById('userSubmitBtnText');
         const submitSpinner = document.getElementById('userSubmitSpinner');
 
-        // Disable button and show spinner
         submitBtn.disabled = true;
         submitBtnText.style.display = 'none';
         submitSpinner.style.display = 'inline-flex';
@@ -389,7 +373,6 @@ class AdminPanel {
             console.error('User creation error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         } finally {
-            // Re-enable button and hide spinner
             submitBtn.disabled = false;
             submitBtnText.style.display = 'inline';
             submitSpinner.style.display = 'none';
@@ -443,7 +426,7 @@ class AdminPanel {
             return;
         }
 
-        const filtered = this.users.filter(user => 
+        const filtered = this.users.filter(user =>
             user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.school.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -471,12 +454,10 @@ class AdminPanel {
     showDeleteUserModal(id, name) {
         this.currentDeleteUserId = id;
         document.getElementById('deleteUserModal').classList.add('show');
-        
-        // Update modal content
+
         const modal = document.querySelector('#deleteUserModal .modal p');
         modal.innerHTML = `Are you sure you want to delete user "<strong>${name}</strong>"? This action cannot be undone and will permanently remove their access.`;
-        
-        // Bind confirm button
+
         document.getElementById('confirmDeleteUserBtn').onclick = () => this.confirmDeleteUser();
     }
 
@@ -524,10 +505,9 @@ class AdminPanel {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}`;
         messageDiv.textContent = message;
-        
+
         container.appendChild(messageDiv);
-        
-        // Auto-remove after 5 seconds
+
         setTimeout(() => {
             messageDiv.remove();
         }, 5000);
@@ -552,7 +532,6 @@ class AdminPanel {
         window.location.href = 'login.html';
     }
 
-    // Password Change Methods
     openPasswordModal() {
         const modal = document.getElementById('passwordModal');
         if (modal) {
@@ -568,7 +547,6 @@ class AdminPanel {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
 
-        // Validate passwords match
         if (data.newPassword !== data.confirmPassword) {
             this.showMessage('New passwords do not match', 'error');
             return;
@@ -578,7 +556,6 @@ class AdminPanel {
         const saveText = document.getElementById('savePasswordText');
         const saveSpinner = document.getElementById('savePasswordSpinner');
 
-        // Show loading state
         saveBtn.disabled = true;
         saveText.style.display = 'none';
         saveSpinner.style.display = 'inline-flex';
@@ -607,7 +584,6 @@ class AdminPanel {
             console.error('Password change error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         } finally {
-            // Reset button state
             saveBtn.disabled = false;
             saveText.style.display = 'inline';
             saveSpinner.style.display = 'none';
@@ -623,7 +599,6 @@ class AdminPanel {
     }
 }
 
-// Global functions for modal
 function hideDeleteModal() {
     document.getElementById('deleteModal').classList.remove('show');
 }
@@ -640,7 +615,6 @@ function closePasswordModal() {
     }
 }
 
-// Initialize admin panel
 let adminPanel;
 document.addEventListener('DOMContentLoaded', () => {
     adminPanel = new AdminPanel();

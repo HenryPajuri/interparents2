@@ -12,7 +12,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Add animation classes when elements come into view
 const observerOptions = {
     threshold: 0.1,
     rootMargin: '0px 0px -50px 0px'
@@ -26,14 +25,11 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Observe all communication cards and member cards
 document.querySelectorAll('.communication-card, .member-card').forEach(card => {
     observer.observe(card);
 });
 
-// Add hover effects to communication cards
 document.addEventListener('DOMContentLoaded', function() {
-    // Use event delegation for dynamically loaded communication cards
     document.addEventListener('mouseenter', function(e) {
         if (e.target.classList.contains('communication-card')) {
             e.target.style.borderColor = '#3498db';
@@ -47,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, true);
 });
 
-// Add hover effects to member cards (now as links)
 document.querySelectorAll('.member-card').forEach(card => {
     card.addEventListener('mouseenter', function() {
         this.style.borderColor = '#3498db';
@@ -57,7 +52,6 @@ document.querySelectorAll('.member-card').forEach(card => {
         this.style.borderColor = '#dee2e6';
     });
     
-    // Add keyboard navigation support for accessibility
     card.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -66,18 +60,14 @@ document.querySelectorAll('.member-card').forEach(card => {
     });
 });
 
-// Function to redirect to historical website with credentials info
 function showCredentialAlert() {
-    // Show alert with credentials, then redirect to the historical site
     const shouldContinue = confirm('This will take you to the historical data website.\n\nCredentials needed:\nUsername: a\nPassword: b\n\nClick OK to continue or Cancel to stay here.');
     
     if (shouldContinue) {
-        // Redirect to the historical website
         window.open('http://www.interparents.eu:8888/', '_blank', 'noopener');
     }
 }
 
-// Dynamic year in footer
 document.addEventListener('DOMContentLoaded', function() {
     const footerText = document.querySelector('footer p');
     if (footerText) {
@@ -85,7 +75,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Optional: Add scroll effect to header
 window.addEventListener('scroll', function() {
     const header = document.querySelector('header');
     if (window.scrollY > 100) {
@@ -97,10 +86,8 @@ window.addEventListener('scroll', function() {
 
 // ========== DYNAMIC COMMUNICATIONS MANAGER ==========
 
-// Communications Manager for Homepage
 class CommunicationsManager {
     constructor() {
-        // ✅ Updated to use full API URL
         this.API_BASE = 'https://interparents-1.onrender.com/api';
         this.communications = [];
         this.init();
@@ -112,10 +99,8 @@ class CommunicationsManager {
 
     async loadCommunications() {
         try {
-            // Show loading state
             this.showLoading();
 
-            // ✅ Added credentials include for cross-origin requests
             const response = await fetch(`${this.API_BASE}/communications`, {
                 credentials: 'include'
             });
@@ -129,19 +114,16 @@ class CommunicationsManager {
                     this.showError('Failed to load communications');
                 }
             } else {
-                // If API fails, fall back to hardcoded data
                 console.warn('API failed, using fallback data');
                 this.loadFallbackData();
             }
         } catch (error) {
             console.error('Error loading communications:', error);
-            // If API fails, fall back to hardcoded data
             this.loadFallbackData();
         }
     }
 
     loadFallbackData() {
-        // Fallback to the original hardcoded communications
         this.communications = [
             {
                 title: "Joint Teaching Committee Report",
@@ -232,7 +214,6 @@ class CommunicationsManager {
             return;
         }
 
-        // Sort communications by publish date (newest first)
         const sortedComms = [...this.communications].sort((a, b) => 
             new Date(b.publishDate) - new Date(a.publishDate)
         );
@@ -245,7 +226,6 @@ class CommunicationsManager {
                 day: 'numeric'
             });
 
-            // Get category display name
             const categoryName = this.getCategoryDisplayName(comm.category);
 
             return `
@@ -261,7 +241,6 @@ class CommunicationsManager {
             `;
         }).join('');
 
-        // Add fade-in animation to new cards
         const cards = container.querySelectorAll('.communication-card');
         cards.forEach((card, index) => {
             card.style.opacity = '0';
@@ -298,7 +277,6 @@ class CommunicationsManager {
         return colorMap[category] || '#95a5a6';
     }
 
-    // Method to refresh communications (can be called externally)
     async refresh() {
         await this.loadCommunications();
     }
@@ -308,7 +286,6 @@ class CommunicationsManager {
 
 class AuthStateManager {
     constructor() {
-        // ✅ Updated to use full API URL
         this.API_BASE = 'https://interparents-1.onrender.com/api';
         this.user = null;
         this.init();
@@ -321,7 +298,6 @@ class AuthStateManager {
 
     async checkAuthState() {
         try {
-            // ✅ Already had credentials include - perfect!
             const response = await fetch(`${this.API_BASE}/auth/me`, {
                 credentials: 'include'
             });
@@ -333,7 +309,6 @@ class AuthStateManager {
                 }
             }
         } catch (error) {
-            // User not logged in, which is fine for public pages
             console.log('User not authenticated');
         }
     }
@@ -343,19 +318,16 @@ class AuthStateManager {
         if (!loginNavItem) return;
 
         if (this.user) {
-            // User is logged in - show dashboard link and logout
             loginNavItem.innerHTML = `
                 <a href="dashboard.html" style="margin-right: 1rem; color: white; text-decoration: none;">Dashboard</a>
                 <a href="#" class="login-button-nav" id="logoutBtn">Logout</a>
             `;
 
-            // Bind logout event
             document.getElementById('logoutBtn').addEventListener('click', (e) => {
                 e.preventDefault();
                 this.logout();
             });
         } else {
-            // User not logged in - show login button
             loginNavItem.innerHTML = `
                 <a href="login.html" class="login-button-nav">Login</a>
             `;
@@ -364,7 +336,6 @@ class AuthStateManager {
 
     async logout() {
         try {
-            // ✅ Added credentials include for logout
             await fetch(`${this.API_BASE}/auth/logout`, {
                 method: 'POST',
                 credentials: 'include'
@@ -375,13 +346,11 @@ class AuthStateManager {
             sessionStorage.clear();
             this.user = null;
             this.updateNavigation();
-            // Show logout message
             this.showMessage('You have been logged out successfully.');
         }
     }
 
     showMessage(message) {
-        // Simple notification
         const notification = document.createElement('div');
         notification.style.cssText = `
             position: fixed;
@@ -403,16 +372,12 @@ class AuthStateManager {
     }
 }
 
-// Auto-initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize authentication state manager on all pages
     window.authStateManager = new AuthStateManager();
 
-    // Only initialize communications manager if we're on a page with communications
     if (document.querySelector('.communications-grid')) {
         window.communicationsManager = new CommunicationsManager();
     }
 });
 
-// Export for potential use in other scripts
 window.CommunicationsManager = CommunicationsManager;

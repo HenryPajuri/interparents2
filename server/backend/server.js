@@ -17,20 +17,19 @@ const PORT = process.env.PORT || 3001;
 
 // Security middleware
 app.use(helmet({
-    contentSecurityPolicy: false, // Disable for development
+    contentSecurityPolicy: false, // Disabled for development
     crossOriginEmbedderPolicy: false
 }));
 
 // Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 100,
     message: 'Too many requests from this IP, please try again later.'
 });
 
-// Stricter rate limiting for login attempts
 const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 15 * 60 * 1000,
     max: 5, // limit each IP to 5 login requests per windowMs
     message: 'Too many login attempts, please try again later.',
     skipSuccessfulRequests: true
@@ -40,30 +39,25 @@ app.use(limiter);
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS configuration
+
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'https://interparentsfrontend.onrender.com',
     credentials: true
 }));
-// Add this code to your server.js after CORS configuration and before your routes
+
 
 // Serve PDF files statically
 app.use('/pdf', express.static(path.join(__dirname, 'pdf'), {
     setHeaders: (res, filePath) => {
-        // Set proper headers for PDF files
         if (filePath.endsWith('.pdf')) {
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'inline'); // Display in browser instead of download
+            res.setHeader('Content-Disposition', 'inline');
         }
     }
 }));
 
-// Also serve static files for any other assets you might have
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
-// Your existing routes start here...
-// Login route, etc.
-// MongoDB connection
 const connectDB = async () => {
     try {
         await mongoose.connect(process.env.MONGODB_URI || 'mongodb://mongodb:27017/interparents', {
@@ -77,7 +71,6 @@ const connectDB = async () => {
     }
 };
 
-// User Schema
 const userSchema = new mongoose.Schema({
     email: {
         type: String,
@@ -122,7 +115,6 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-// Communication/PDF Schema
 const communicationSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -184,7 +176,6 @@ userSchema.pre('save', async function(next) {
     }
 });
 
-// Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
@@ -237,7 +228,6 @@ const auth = async (req, res, next) => {
     }
 };
 
-// Admin/Executive middleware
 const adminAuth = (req, res, next) => {
     if (req.user.role !== 'admin' && req.user.role !== 'executive') {
         return res.status(403).json({ 
@@ -251,10 +241,8 @@ const adminAuth = (req, res, next) => {
 // File upload configuration - UPDATED for Render
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        // Use relative path instead of absolute path
         const uploadDir = path.join(__dirname, 'pdf');
         
-        // Ensure directory exists
         const fs = require('fs');
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
@@ -288,7 +276,6 @@ const upload = multer({
 });
 // Routes
 
-// Login route with fixed cookie settings for cross-origin
 app.post('/api/auth/login', loginLimiter, [
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 6 })
@@ -326,15 +313,13 @@ app.post('/api/auth/login', loginLimiter, [
 
         const token = generateToken(user._id);
 
-        // ✅ Fixed cookie settings for cross-origin requests
         res.cookie('token', token, {
             httpOnly: true,
-            secure: true,  // Always secure for cross-origin
-            sameSite: 'none',  // Allow cross-origin cookies  
+            secure: true,  
+            sameSite: 'none',  
             maxAge: 24 * 60 * 60 * 1000 // 24 hours
         });
 
-        // Set cache control headers
         res.set({
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
@@ -364,7 +349,6 @@ app.post('/api/auth/login', loginLimiter, [
 });
 
 
-// Logout route
 app.post('/api/auth/logout', (req, res) => {
     res.clearCookie('token');
     res.json({
@@ -373,7 +357,6 @@ app.post('/api/auth/logout', (req, res) => {
     });
 });
 
-// Get current user
 app.get('/api/auth/me', auth, (req, res) => {
     res.json({
         success: true,
@@ -391,7 +374,6 @@ app.get('/api/auth/me', auth, (req, res) => {
 
 // ========== COMMUNICATION MANAGEMENT ROUTES ==========
 
-// Get all communications (public - no auth required)
 app.get('/api/communications', async (req, res) => {
     try {
         const communications = await Communication.find({ isActive: true })
@@ -411,7 +393,6 @@ app.get('/api/communications', async (req, res) => {
     }
 });
 
-// Upload new communication (admin/executive only)
 app.post('/api/communications', auth, adminAuth, upload.single('pdf'), [
     body('title').trim().isLength({ min: 3 }).withMessage('Title must be at least 3 characters'),
     body('description').trim().isLength({ min: 10 }).withMessage('Description must be at least 10 characters'),
@@ -420,7 +401,6 @@ app.post('/api/communications', auth, adminAuth, upload.single('pdf'), [
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            // Delete uploaded file if validation fails
             if (req.file) {
                 await fs.unlink(req.file.path).catch(console.error);
             }
@@ -473,7 +453,6 @@ app.post('/api/communications', auth, adminAuth, upload.single('pdf'), [
     }
 });
 
-// Update communication (admin/executive only)
 app.put('/api/communications/:id', auth, adminAuth, [
     body('title').optional().trim().isLength({ min: 3 }),
     body('description').optional().trim().isLength({ min: 10 }),
@@ -525,7 +504,6 @@ app.put('/api/communications/:id', auth, adminAuth, [
     }
 });
 
-// Delete communication (admin/executive only)
 app.delete('/api/communications/:id', auth, adminAuth, async (req, res) => {
     try {
         const communication = await Communication.findById(req.params.id);
@@ -536,16 +514,14 @@ app.delete('/api/communications/:id', auth, adminAuth, async (req, res) => {
             });
         }
 
-        // ✅ Update this path to match the new multer destination
+
         const filePath = path.join(__dirname, 'pdf', communication.filename);
         try {
             await fs.unlink(filePath);
         } catch (fileError) {
             console.error('Error deleting file:', fileError);
-            // Continue with database deletion even if file deletion fails
         }
 
-        // Remove from database
         await Communication.findByIdAndDelete(req.params.id);
 
         res.json({
@@ -562,7 +538,6 @@ app.delete('/api/communications/:id', auth, adminAuth, async (req, res) => {
     }
 });
 
-// Get all users (admin only)
 app.get('/api/users', auth, adminAuth, async (req, res) => {
     try {
         const users = await User.find({ isActive: true }).select('-password');
@@ -578,7 +553,6 @@ app.get('/api/users', auth, adminAuth, async (req, res) => {
     }
 });
 
-// Create new user (admin only)
 app.post('/api/users', auth, adminAuth, [
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 6 }),
@@ -639,12 +613,10 @@ app.post('/api/users', auth, adminAuth, [
 });
 
 
-// Delete user (admin/executive only)
 app.delete('/api/users/:id', auth, adminAuth, async (req, res) => {
     try {
         const userId = req.params.id;
 
-        // Prevent deleting yourself
         if (userId === req.user._id.toString()) {
             return res.status(400).json({
                 success: false,
@@ -676,7 +648,6 @@ app.delete('/api/users/:id', auth, adminAuth, async (req, res) => {
     }
 });
 
-// Health check
 app.get('/api/health', (req, res) => {
     res.json({
         success: true,
@@ -685,7 +656,6 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ✅ CORRECT PLACE - Root route BEFORE error handling
 app.get('/', (req, res) => {
     res.json({
         success: true,
@@ -700,7 +670,6 @@ app.get('/', (req, res) => {
     });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
@@ -726,7 +695,6 @@ app.use((err, req, res, next) => {
 });
 
 
-// 404 handler
 app.use('*', (req, res) => {
     res.status(404).json({
         success: false,
@@ -734,7 +702,6 @@ app.use('*', (req, res) => {
     });
 });
 
-// Start server
 const startServer = async () => {
     await connectDB();
     app.listen(PORT, () => {
