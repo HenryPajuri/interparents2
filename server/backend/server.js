@@ -658,6 +658,21 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// ✅ CORRECT PLACE - Root route BEFORE error handling
+app.get('/', (req, res) => {
+    res.json({
+        success: true,
+        message: 'INTERPARENTS API Server is running',
+        version: '1.0.0',
+        endpoints: {
+            health: '/api/health',
+            auth: '/api/auth/*',
+            communications: '/api/communications',
+            users: '/api/users'
+        }
+    });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
@@ -682,20 +697,7 @@ app.use((err, req, res, next) => {
         message: 'Something went wrong!'
     });
 });
-// Serve a simple message for the root route
-app.get('/', (req, res) => {
-    res.json({
-        success: true,
-        message: 'INTERPARENTS API Server is running',
-        version: '1.0.0',
-        endpoints: {
-            health: '/api/health',
-            auth: '/api/auth/*',
-            communications: '/api/communications',
-            users: '/api/users'
-        }
-    });
-});
+
 
 // 404 handler
 app.use('*', (req, res) => {
