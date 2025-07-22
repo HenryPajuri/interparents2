@@ -263,7 +263,7 @@ const upload = multer({
 
 // Routes
 
-// Login route (unchanged)
+// Login route with fixed cookie settings for cross-origin
 app.post('/api/auth/login', loginLimiter, [
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 6 })
@@ -301,10 +301,11 @@ app.post('/api/auth/login', loginLimiter, [
 
         const token = generateToken(user._id);
 
+        // ✅ Fixed cookie settings for cross-origin requests
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: true,  // Always secure for cross-origin
+            sameSite: 'none',  // Allow cross-origin cookies  
             maxAge: 24 * 60 * 60 * 1000 // 24 hours
         });
 
@@ -336,6 +337,7 @@ app.post('/api/auth/login', loginLimiter, [
         });
     }
 });
+
 
 // Logout route
 app.post('/api/auth/logout', (req, res) => {
