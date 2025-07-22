@@ -256,7 +256,7 @@ class CommunicationsManager {
                         <span style="background: ${this.getCategoryColor(comm.category)}; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.8rem; font-weight: 500;">${categoryName}</span>
                     </div>` : ''}
                     <p>${comm.description}</p>
-                    <a href="/pdf/${comm.filename}" class="download-link" target="_blank" rel="noopener">Download (PDF)</a>
+                 <a href="https://interparents-1.onrender.com/pdf/${comm.filename}" class="download-link" target="_blank" rel="noopener">Download (PDF)</a>
                 </div>
             `;
         }).join('');

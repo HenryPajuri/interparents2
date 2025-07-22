@@ -259,7 +259,7 @@ class AdminPanel {
                 <td>${this.formatFileSize(comm.fileSize)}</td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-edit" onclick="window.open('/pdf/${comm.filename}', '_blank')">
+                        <button class="btn-edit" onclick="window.open('https://interparents-1.onrender.com/pdf/${comm.filename}', '_blank')">
                             View
                         </button>
                         <button class="btn-delete" onclick="adminPanel.showDeleteModal('${comm._id}', '${comm.title}')">
