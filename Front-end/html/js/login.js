@@ -9,7 +9,8 @@ class LoginManager {
         this.passwordToggle = document.getElementById('passwordToggle');
         this.messageDiv = document.getElementById('loginMessage');
         
-        this.API_BASE = '/api';
+        // ✅ Fixed: Use full API URL for deployed version
+        this.API_BASE = 'https://interparents-1.onrender.com/api';
         this.isLoading = false;
         
         this.init();
@@ -60,7 +61,8 @@ class LoginManager {
                 if (data.success) {
                     this.showMessage('You are already logged in. Redirecting...', 'info');
                     setTimeout(() => {
-                        window.location.href = '/html/dashboard.html';
+                        // ✅ Fixed: Use correct dashboard path
+                        window.location.href = 'dashboard.html';
                     }, 1500);
                 }
             }
@@ -123,7 +125,8 @@ class LoginManager {
                 
                 // Redirect after short delay
                 setTimeout(() => {
-                    window.location.href = '/html/dashboard.html';
+                    // ✅ Fixed: Use correct dashboard path
+                    window.location.href = 'dashboard.html';
                 }, 1500);
                 
             } else {
