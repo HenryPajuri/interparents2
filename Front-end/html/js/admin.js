@@ -1,7 +1,8 @@
 // Admin Panel JavaScript
 class AdminPanel {
     constructor() {
-        this.API_BASE = '/api';
+        // ✅ Fixed: Use correct backend API URL
+        this.API_BASE = 'https://interparents-1.onrender.com/api';
         this.user = null;
         this.communications = [];
         this.users = [];
