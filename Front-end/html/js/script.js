@@ -345,7 +345,7 @@ class AuthStateManager {
         if (this.user) {
             // User is logged in - show dashboard link and logout
             loginNavItem.innerHTML = `
-                <a href="/html/dashboard.html" style="margin-right: 1rem; color: white; text-decoration: none;">Dashboard</a>
+                <a href="dashboard.html" style="margin-right: 1rem; color: white; text-decoration: none;">Dashboard</a>
                 <a href="#" class="login-button-nav" id="logoutBtn">Logout</a>
             `;
 
@@ -357,7 +357,7 @@ class AuthStateManager {
         } else {
             // User not logged in - show login button
             loginNavItem.innerHTML = `
-                <a href="/html/login.html" class="login-button-nav">Login</a>
+                <a href="login.html" class="login-button-nav">Login</a>
             `;
         }
     }
