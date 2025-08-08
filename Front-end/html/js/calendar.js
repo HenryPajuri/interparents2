@@ -1,13 +1,14 @@
-// Enhanced Calendar functionality with better error handling and debugging
+// Enhanced Calendar functionality with fixed update and delete
 class Calendar {
     constructor() {
         this.currentDate = new Date();
         this.currentView = 'month';
         this.events = [];
         this.selectedEventId = null;
+        this.isEditMode = false; // Track if we're editing or creating
         this.API_BASE = 'https://interparents-1.onrender.com/api';
         this.isLoading = false;
-        this.debugMode = true; // Enable detailed logging
+        this.debugMode = true;
         
         console.log('🗓️ Calendar initialized with API_BASE:', this.API_BASE);
         this.init();
@@ -48,7 +49,6 @@ class Calendar {
             const response = await fetch(url, mergedOptions);
             
             console.log(`📥 Response: ${response.status} ${response.statusText}`);
-            console.log('Response headers:', [...response.headers.entries()]);
             
             if (!response.ok) {
                 let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -82,7 +82,7 @@ class Calendar {
         }
     }
 
-    // Enhanced event loading with better error handling
+    // Enhanced event loading
     async loadEvents() {
         try {
             console.log('📅 Loading events...');
@@ -106,20 +106,7 @@ class Calendar {
             
         } catch (error) {
             console.error('❌ Error loading events from backend:', error);
-            
-            // More specific error messages
-            if (error.message.includes('404')) {
-                this.showMessage('Backend API not found. Please check if the server is running correctly.', 'error');
-            } else if (error.message.includes('401')) {
-                this.showMessage('Authentication required. Please login to view events.', 'error');
-            } else if (error.message.includes('500')) {
-                this.showMessage('Server error. Please try again later.', 'error');
-            } else if (error.message.includes('Failed to fetch')) {
-                this.showMessage('Cannot connect to server. Please check your internet connection.', 'error');
-            } else {
-                this.showMessage(`Failed to load events: ${error.message}`, 'error');
-            }
-            
+            this.showMessage(`Failed to load events: ${error.message}`, 'error');
             console.log('🔄 Loading sample events as fallback');
             this.events = this.loadSampleEvents();
         }
@@ -136,7 +123,7 @@ class Calendar {
                 date: '2025-01-15',
                 time: '14:00',
                 location: 'Brussels, Belgium',
-                description: 'Weekly Bureau meeting to discuss ongoing initiatives and upcoming Board of Governors meeting.',
+                description: 'Weekly Bureau meeting to discuss ongoing initiatives.',
                 organizer: 'INTERPARENTS Bureau',
                 canEdit: false
             },
@@ -147,19 +134,8 @@ class Calendar {
                 date: '2025-02-12',
                 time: '09:00',
                 location: 'Brussels, Belgium',
-                description: 'JTC meeting with inspectors from all Member States and representatives of all stakeholders.',
+                description: 'JTC meeting with inspectors from all Member States.',
                 organizer: 'European Schools Office',
-                canEdit: false
-            },
-            {
-                id: 'sample-3',
-                title: 'Parent Engagement Webinar',
-                type: 'webinar',
-                date: '2025-01-22',
-                time: '16:00',
-                location: 'Online',
-                description: 'Webinar on improving parent-school communication strategies.',
-                organizer: 'Parent Engagement Committee',
                 canEdit: false
             }
         ];
@@ -251,12 +227,10 @@ class Calendar {
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth();
         
-        // Get first day of month and calculate starting date
         const firstDay = new Date(year, month, 1);
         const startDate = new Date(firstDay);
         startDate.setDate(startDate.getDate() - firstDay.getDay());
 
-        // Generate 42 days (6 weeks)
         for (let i = 0; i < 42; i++) {
             const date = new Date(startDate);
             date.setDate(startDate.getDate() + i);
@@ -282,7 +256,6 @@ class Calendar {
         dayNumber.textContent = date.getDate();
         day.appendChild(dayNumber);
 
-        // Add events for this day
         const dayEvents = this.getEventsForDate(date);
         dayEvents.forEach(event => {
             const eventElement = document.createElement('div');
@@ -295,7 +268,6 @@ class Calendar {
             day.appendChild(eventElement);
         });
 
-        // Add click handler to add events
         day.addEventListener('click', () => {
             this.openEventModal(date);
         });
@@ -308,11 +280,9 @@ class Calendar {
         document.getElementById('weekView').style.display = 'block';
         document.getElementById('agendaView').style.display = 'none';
 
-        // Get week start (Sunday)
         const weekStart = new Date(this.currentDate);
         weekStart.setDate(weekStart.getDate() - weekStart.getDay());
 
-        // Render week days header
         const weekDays = document.getElementById('weekDays');
         weekDays.innerHTML = '';
         
@@ -335,7 +305,6 @@ class Calendar {
             weekDays.appendChild(dayElement);
         }
 
-        // Render time slots and events
         this.renderWeekGrid(weekStart);
     }
 
@@ -343,7 +312,6 @@ class Calendar {
         const weekGrid = document.getElementById('weekGrid');
         weekGrid.innerHTML = '';
 
-        // Time slots
         const timeSlots = document.createElement('div');
         timeSlots.className = 'week-time-slots';
         
@@ -355,7 +323,6 @@ class Calendar {
         }
         weekGrid.appendChild(timeSlots);
 
-        // Events grid
         const eventsGrid = document.createElement('div');
         eventsGrid.className = 'week-events';
         
@@ -365,9 +332,8 @@ class Calendar {
             
             const dayEvents = document.createElement('div');
             dayEvents.className = 'week-day-events';
-            dayEvents.style.height = '1440px'; // 24 hours * 60px
+            dayEvents.style.height = '1440px';
             
-            // Add events for this day
             const events = this.getEventsForDate(date);
             events.forEach(event => {
                 if (event.time) {
@@ -403,7 +369,6 @@ class Calendar {
             filteredEvents = this.events.filter(event => event.type === filter);
         }
 
-        // Sort events by date
         filteredEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         agendaList.innerHTML = '';
@@ -447,7 +412,6 @@ class Calendar {
     switchView(view) {
         this.currentView = view;
         
-        // Update active button
         document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelector(`[data-view="${view}"]`).classList.add('active');
         
@@ -469,28 +433,36 @@ class Calendar {
         return days[dayIndex];
     }
 
+    // FIXED: Reset modal state properly
     openEventModal(date = null) {
+        console.log('🎯 Opening event modal for new event');
+        
         const modal = document.getElementById('eventModal');
         const form = document.getElementById('eventForm');
         
-        // Reset form
+        // IMPORTANT: Reset all state
         form.reset();
         this.selectedEventId = null;
+        this.isEditMode = false;
         
         // Set date if provided
         if (date) {
             document.getElementById('eventDate').value = date.toISOString().split('T')[0];
         }
         
-        // Update modal title
+        // Update modal for new event
         document.getElementById('modalTitle').textContent = 'Add Event';
         document.getElementById('deleteEventBtn').style.display = 'none';
         document.getElementById('saveEventBtn').textContent = 'Save Event';
+        
+        console.log('🎯 Modal state: selectedEventId =', this.selectedEventId, 'isEditMode =', this.isEditMode);
         
         modal.classList.add('show');
     }
 
     showEventDetails(event) {
+        console.log('👁️ Showing event details for:', event.title, 'ID:', event.id);
+        
         const modal = document.getElementById('eventDetailsModal');
         const content = document.getElementById('eventDetailsContent');
         
@@ -533,6 +505,7 @@ class Calendar {
             ` : ''}
         `;
 
+        // Store the selected event ID for editing
         this.selectedEventId = event.id;
         
         // Show/hide edit button based on permissions
@@ -543,48 +516,76 @@ class Calendar {
             editBtn.style.display = 'none';
         }
         
+        console.log('👁️ Event details modal opened, selectedEventId set to:', this.selectedEventId);
+        
         modal.classList.add('show');
     }
 
+    // FIXED: Properly set edit mode and populate form
     editCurrentEvent() {
-        if (!this.selectedEventId) return;
+        if (!this.selectedEventId) {
+            console.error('❌ No event selected for editing');
+            return;
+        }
         
         const event = this.events.find(e => e.id === this.selectedEventId);
-        if (!event || event.canEdit === false) {
+        if (!event) {
+            console.error('❌ Event not found:', this.selectedEventId);
+            this.showMessage('Event not found', 'error');
+            return;
+        }
+        
+        if (event.canEdit === false) {
             this.showMessage('You do not have permission to edit this event.', 'error');
             return;
         }
         
+        console.log('✏️ Editing event:', event.title, 'ID:', this.selectedEventId);
+        
         // Close details modal
         this.closeEventDetailsModal();
         
-        // Open edit modal
+        // Open edit modal with proper state
         const modal = document.getElementById('eventModal');
         
+        // IMPORTANT: Set edit mode BEFORE populating form
+        this.isEditMode = true;
+        // selectedEventId is already set from showEventDetails
+        
         // Populate form with event data
-        document.getElementById('eventTitle').value = event.title;
-        document.getElementById('eventType').value = event.type;
-        document.getElementById('eventDate').value = event.date;
+        document.getElementById('eventTitle').value = event.title || '';
+        document.getElementById('eventType').value = event.type || '';
+        document.getElementById('eventDate').value = event.date || '';
         document.getElementById('eventTime').value = event.time || '';
         document.getElementById('eventLocation').value = event.location || '';
         document.getElementById('eventDescription').value = event.description || '';
         document.getElementById('eventOrganizer').value = event.organizer || '';
         
-        // Update modal title and buttons
+        // Update modal for editing
         document.getElementById('modalTitle').textContent = 'Edit Event';
         document.getElementById('deleteEventBtn').style.display = 'inline-block';
         document.getElementById('saveEventBtn').textContent = 'Update Event';
         
-        // Set up delete button
-        document.getElementById('deleteEventBtn').onclick = () => this.deleteEvent();
+        // Set up delete button with proper event handler
+        const deleteBtn = document.getElementById('deleteEventBtn');
+        deleteBtn.onclick = (e) => {
+            e.preventDefault();
+            this.deleteEvent();
+        };
+        
+        console.log('✏️ Edit modal state: selectedEventId =', this.selectedEventId, 'isEditMode =', this.isEditMode);
         
         modal.classList.add('show');
     }
 
+    // FIXED: Properly handle create vs update
     async saveEvent(e) {
         e.preventDefault();
         
-        if (this.isLoading) return;
+        if (this.isLoading) {
+            console.log('⏳ Already saving, ignoring duplicate request');
+            return;
+        }
         
         const formData = new FormData(e.target);
         const eventData = {
@@ -597,21 +598,23 @@ class Calendar {
             organizer: formData.get('organizer')
         };
 
-        console.log('💾 Saving event:', eventData);
+        console.log('💾 Saving event...');
+        console.log('💾 Event data:', eventData);
+        console.log('💾 Current state: selectedEventId =', this.selectedEventId, 'isEditMode =', this.isEditMode);
 
-        // Set loading state
         this.setModalLoadingState(true);
 
         try {
             let data;
             
-            if (this.selectedEventId) {
+            if (this.isEditMode && this.selectedEventId) {
                 // Update existing event
                 console.log(`✏️ Updating event: ${this.selectedEventId}`);
                 data = await this.apiCall(`/events/${this.selectedEventId}`, {
                     method: 'PUT',
                     body: JSON.stringify(eventData)
                 });
+                console.log('✅ Event updated successfully');
             } else {
                 // Create new event
                 console.log('➕ Creating new event');
@@ -619,6 +622,7 @@ class Calendar {
                     method: 'POST',
                     body: JSON.stringify(eventData)
                 });
+                console.log('✅ Event created successfully');
             }
 
             if (data && data.success) {
@@ -639,14 +643,21 @@ class Calendar {
         }
     }
 
+    // FIXED: Proper delete functionality
     async deleteEvent() {
-        if (!this.selectedEventId) return;
+        if (!this.selectedEventId) {
+            console.error('❌ No event selected for deletion');
+            return;
+        }
         
-        if (!confirm('Are you sure you want to delete this event?')) {
+        console.log(`🗑️ Attempting to delete event: ${this.selectedEventId}`);
+        
+        if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+            console.log('🚫 Delete cancelled by user');
             return;
         }
 
-        console.log(`🗑️ Deleting event: ${this.selectedEventId}`);
+        console.log(`🗑️ Confirmed deletion of event: ${this.selectedEventId}`);
         this.setModalLoadingState(true);
 
         try {
@@ -655,6 +666,7 @@ class Calendar {
             });
 
             if (data && data.success) {
+                console.log('✅ Event deleted successfully');
                 this.showMessage('Event deleted successfully', 'success');
                 this.closeEventModal();
                 
@@ -684,7 +696,7 @@ class Calendar {
         } else {
             saveBtn.disabled = false;
             deleteBtn.disabled = false;
-            saveBtn.textContent = this.selectedEventId ? 'Update Event' : 'Save Event';
+            saveBtn.textContent = this.isEditMode ? 'Update Event' : 'Save Event';
         }
     }
 
@@ -714,7 +726,6 @@ class Calendar {
     showMessage(message, type = 'info') {
         console.log(`📢 Message (${type}): ${message}`);
         
-        // Create or get message container
         let messageContainer = document.getElementById('calendarMessages');
         if (!messageContainer) {
             messageContainer = document.createElement('div');
@@ -723,7 +734,6 @@ class Calendar {
             document.body.appendChild(messageContainer);
         }
 
-        // Create message element
         const messageDiv = document.createElement('div');
         messageDiv.className = `calendar-message ${type}`;
         messageDiv.style.cssText = `
@@ -741,7 +751,6 @@ class Calendar {
 
         messageContainer.appendChild(messageDiv);
 
-        // Remove message after 5 seconds
         setTimeout(() => {
             messageDiv.remove();
         }, 5000);
@@ -751,14 +760,22 @@ class Calendar {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
+    // FIXED: Properly reset modal state
     closeEventModal() {
+        console.log('🚪 Closing event modal and resetting state');
         document.getElementById('eventModal').classList.remove('show');
+        
+        // Reset all state
         this.selectedEventId = null;
+        this.isEditMode = false;
+        
+        console.log('🚪 Modal state reset: selectedEventId =', this.selectedEventId, 'isEditMode =', this.isEditMode);
     }
 
     closeEventDetailsModal() {
+        console.log('🚪 Closing event details modal');
         document.getElementById('eventDetailsModal').classList.remove('show');
-        this.selectedEventId = null;
+        // Note: Don't reset selectedEventId here as it might be needed for editing
     }
 
     redirectToLogin() {
