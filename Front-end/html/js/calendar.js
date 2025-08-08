@@ -1,67 +1,133 @@
-// Calendar functionality for INTERPARENTS with MongoDB integration
+// Enhanced Calendar functionality with better error handling and debugging
 class Calendar {
     constructor() {
         this.currentDate = new Date();
         this.currentView = 'month';
         this.events = [];
         this.selectedEventId = null;
-        // Use your backend API URL - update this to match your backend deployment
         this.API_BASE = 'https://interparents-1.onrender.com/api';
         this.isLoading = false;
+        this.debugMode = true; // Enable detailed logging
         
+        console.log('🗓️ Calendar initialized with API_BASE:', this.API_BASE);
         this.init();
     }
 
     async init() {
+        console.log('🔄 Initializing calendar...');
         this.bindEvents();
         this.showLoading(true);
         await this.loadEvents();
         this.showLoading(false);
         this.render();
         this.updateCurrentMonth();
+        console.log('✅ Calendar initialization complete');
     }
 
-    // Load events from backend API
-    async loadEvents() {
-        try {
-            const currentYear = this.currentDate.getFullYear();
-            const currentMonth = this.currentDate.getMonth() + 1;
-            
-            const response = await fetch(`${this.API_BASE}/events?year=${currentYear}&month=${currentMonth}`, {
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+    // Enhanced API call method with better error handling
+    async apiCall(endpoint, options = {}) {
+        const url = `${this.API_BASE}${endpoint}`;
+        console.log(`🌐 API Call: ${options.method || 'GET'} ${url}`);
+        
+        const defaultOptions = {
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
 
+        const mergedOptions = { ...defaultOptions, ...options };
+
+        try {
+            console.log('📤 Request options:', {
+                method: mergedOptions.method || 'GET',
+                headers: mergedOptions.headers,
+                body: mergedOptions.body ? 'Present' : 'None'
+            });
+            
+            const response = await fetch(url, mergedOptions);
+            
+            console.log(`📥 Response: ${response.status} ${response.statusText}`);
+            console.log('Response headers:', [...response.headers.entries()]);
+            
             if (!response.ok) {
-                if (response.status === 401) {
-                    this.redirectToLogin();
-                    return;
+                let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                
+                try {
+                    const errorData = await response.json();
+                    console.error('❌ Error response data:', errorData);
+                    errorMessage = errorData.message || errorMessage;
+                } catch (parseError) {
+                    console.error('❌ Could not parse error response as JSON');
+                    const errorText = await response.text();
+                    console.error('❌ Error response text:', errorText);
                 }
-                throw new Error(`HTTP error! status: ${response.status}`);
+                
+                if (response.status === 401) {
+                    console.warn('🔒 Authentication failed - redirecting to login');
+                    this.redirectToLogin();
+                    return null;
+                }
+                
+                throw new Error(errorMessage);
             }
 
             const data = await response.json();
+            console.log('✅ Response data:', data);
+            return data;
             
-            if (data.success) {
-                this.events = data.events || [];
-                console.log('Loaded events from backend:', this.events.length);
-            } else {
-                throw new Error(data.message || 'Failed to load events');
-            }
         } catch (error) {
-            console.error('Error loading events:', error);
-            this.showMessage('Failed to load events from server. Showing sample events.', 'warning');
+            console.error('💥 API call failed:', error);
+            throw error;
+        }
+    }
+
+    // Enhanced event loading with better error handling
+    async loadEvents() {
+        try {
+            console.log('📅 Loading events...');
+            const currentYear = this.currentDate.getFullYear();
+            const currentMonth = this.currentDate.getMonth() + 1;
             
-            // Fallback to sample events if API fails
+            console.log(`📅 Requesting events for ${currentYear}-${currentMonth.toString().padStart(2, '0')}`);
+            
+            const data = await this.apiCall(`/events?year=${currentYear}&month=${currentMonth}`);
+            
+            if (data && data.success) {
+                this.events = data.events || [];
+                console.log(`✅ Loaded ${this.events.length} events from backend`);
+                
+                if (this.debugMode && this.events.length > 0) {
+                    console.log('📅 Sample event:', this.events[0]);
+                }
+            } else {
+                throw new Error(data?.message || 'Failed to load events - invalid response format');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error loading events from backend:', error);
+            
+            // More specific error messages
+            if (error.message.includes('404')) {
+                this.showMessage('Backend API not found. Please check if the server is running correctly.', 'error');
+            } else if (error.message.includes('401')) {
+                this.showMessage('Authentication required. Please login to view events.', 'error');
+            } else if (error.message.includes('500')) {
+                this.showMessage('Server error. Please try again later.', 'error');
+            } else if (error.message.includes('Failed to fetch')) {
+                this.showMessage('Cannot connect to server. Please check your internet connection.', 'error');
+            } else {
+                this.showMessage(`Failed to load events: ${error.message}`, 'error');
+            }
+            
+            console.log('🔄 Loading sample events as fallback');
             this.events = this.loadSampleEvents();
         }
     }
 
     // Load sample events as fallback
     loadSampleEvents() {
-        console.log('Loading sample events as fallback');
+        console.log('📅 Loading sample events as fallback');
         return [
             {
                 id: 'sample-1',
@@ -97,37 +163,6 @@ class Calendar {
                 canEdit: false
             }
         ];
-    }
-
-    // Utility method for making API calls
-    async apiCall(endpoint, options = {}) {
-        const defaultOptions = {
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        };
-
-        const mergedOptions = { ...defaultOptions, ...options };
-
-        try {
-            const response = await fetch(`${this.API_BASE}${endpoint}`, mergedOptions);
-            
-            if (!response.ok) {
-                if (response.status === 401) {
-                    this.redirectToLogin();
-                    return null;
-                }
-                
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('API call failed:', error);
-            throw error;
-        }
     }
 
     bindEvents() {
@@ -562,38 +597,42 @@ class Calendar {
             organizer: formData.get('organizer')
         };
 
+        console.log('💾 Saving event:', eventData);
+
         // Set loading state
         this.setModalLoadingState(true);
 
         try {
-            let response;
+            let data;
             
             if (this.selectedEventId) {
                 // Update existing event
-                response = await this.apiCall(`/events/${this.selectedEventId}`, {
+                console.log(`✏️ Updating event: ${this.selectedEventId}`);
+                data = await this.apiCall(`/events/${this.selectedEventId}`, {
                     method: 'PUT',
                     body: JSON.stringify(eventData)
                 });
             } else {
                 // Create new event
-                response = await this.apiCall('/events', {
+                console.log('➕ Creating new event');
+                data = await this.apiCall('/events', {
                     method: 'POST',
                     body: JSON.stringify(eventData)
                 });
             }
 
-            if (response && response.success) {
-                this.showMessage(response.message || 'Event saved successfully!', 'success');
+            if (data && data.success) {
+                this.showMessage(data.message || 'Event saved successfully!', 'success');
                 this.closeEventModal();
                 
                 // Reload events to get updated data
                 await this.loadEvents();
                 this.render();
             } else {
-                throw new Error(response?.message || 'Failed to save event');
+                throw new Error(data?.message || 'Failed to save event');
             }
         } catch (error) {
-            console.error('Error saving event:', error);
+            console.error('❌ Error saving event:', error);
             this.showMessage(error.message || 'Failed to save event. Please try again.', 'error');
         } finally {
             this.setModalLoadingState(false);
@@ -607,14 +646,15 @@ class Calendar {
             return;
         }
 
+        console.log(`🗑️ Deleting event: ${this.selectedEventId}`);
         this.setModalLoadingState(true);
 
         try {
-            const response = await this.apiCall(`/events/${this.selectedEventId}`, {
+            const data = await this.apiCall(`/events/${this.selectedEventId}`, {
                 method: 'DELETE'
             });
 
-            if (response && response.success) {
+            if (data && data.success) {
                 this.showMessage('Event deleted successfully', 'success');
                 this.closeEventModal();
                 
@@ -622,10 +662,10 @@ class Calendar {
                 await this.loadEvents();
                 this.render();
             } else {
-                throw new Error(response?.message || 'Failed to delete event');
+                throw new Error(data?.message || 'Failed to delete event');
             }
         } catch (error) {
-            console.error('Error deleting event:', error);
+            console.error('❌ Error deleting event:', error);
             this.showMessage(error.message || 'Failed to delete event. Please try again.', 'error');
         } finally {
             this.setModalLoadingState(false);
@@ -672,6 +712,8 @@ class Calendar {
     }
 
     showMessage(message, type = 'info') {
+        console.log(`📢 Message (${type}): ${message}`);
+        
         // Create or get message container
         let messageContainer = document.getElementById('calendarMessages');
         if (!messageContainer) {
@@ -693,6 +735,7 @@ class Calendar {
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             animation: slideIn 0.3s ease;
             max-width: 300px;
+            word-wrap: break-word;
         `;
         messageDiv.textContent = message;
 
@@ -739,6 +782,7 @@ function closeEventDetailsModal() {
 
 // Initialize calendar when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🌟 DOM loaded, initializing calendar...');
     window.calendar = new Calendar();
     
     // Close modals when clicking outside
