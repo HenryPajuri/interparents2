@@ -194,8 +194,20 @@
     text-align: center;
     color: #7f8c8d;
     font-style: italic;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     font-size: 0.9rem;
+}
+
+.member-details {
+    text-align: center;
+    color: #3498db;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    background: rgba(52, 152, 219, 0.1);
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    display: inline-block;
 }
 
 .member-bio {
