@@ -1,4 +1,4 @@
-// Enhanced Calendar functionality with proper authentication integration
+// Enhanced Calendar functionality with proper authentication integration, debouncing, and error handling
 class Calendar {
     constructor() {
         this.currentDate = new Date();
@@ -11,6 +11,13 @@ class Calendar {
         this.debugMode = true;
         this.isAuthenticated = false;
         this.currentUser = null;
+        
+        // Add debouncing properties
+        this.navigationTimeout = null;
+        this.lastNavigationTime = 0;
+        this.NAVIGATION_DEBOUNCE_MS = 500; // 500ms debounce
+        this.rateLimitBackoff = 1000; // Start with 1 second backoff
+        this.maxRetries = 3;
         
         console.log('🗓️ Calendar initialized with API_BASE:', this.API_BASE);
         this.init();
@@ -32,7 +39,7 @@ class Calendar {
         console.log('✅ Calendar initialization complete');
     }
 
-    // NEW: Check authentication state
+    // Check authentication state
     async checkAuthState() {
         try {
             const response = await fetch(`${this.API_BASE}/auth/me`, {
@@ -60,7 +67,7 @@ class Calendar {
         }
     }
 
-    // NEW: Update UI based on authentication state
+    // Update UI based on authentication state
     updateUI() {
         const addEventBtn = document.getElementById('addEventBtn');
         const authNotice = document.getElementById('authNotice');
@@ -79,7 +86,7 @@ class Calendar {
         }
     }
 
-    // NEW: Update navigation to show proper login/logout state
+    // Update navigation to show proper login/logout state
     updateNavigation() {
         const loginNavItem = document.querySelector('.login-nav-item');
         if (!loginNavItem || !this.currentUser) return;
@@ -102,7 +109,7 @@ class Calendar {
         }
     }
 
-    // NEW: Logout functionality
+    // Logout functionality
     async logout() {
         try {
             await fetch(`${this.API_BASE}/auth/logout`, {
@@ -119,10 +126,10 @@ class Calendar {
         }
     }
 
-    // UPDATED: Enhanced API call method with optional authentication
-    async apiCall(endpoint, options = {}) {
+    // Enhanced API call with retry logic and rate limit handling
+    async apiCall(endpoint, options = {}, retryCount = 0) {
         const url = `${this.API_BASE}${endpoint}`;
-        console.log(`🌐 API Call: ${options.method || 'GET'} ${url}`);
+        console.log(`🌐 API Call (attempt ${retryCount + 1}): ${options.method || 'GET'} ${url}`);
         
         const defaultOptions = {
             credentials: 'include',
@@ -136,6 +143,27 @@ class Calendar {
         try {
             const response = await fetch(url, mergedOptions);
             console.log(`📥 Response: ${response.status} ${response.statusText}`);
+            
+            // Handle rate limiting
+            if (response.status === 429) {
+                const retryAfter = response.headers.get('Retry-After') || this.rateLimitBackoff / 1000;
+                console.warn(`⏰ Rate limited. Retry after ${retryAfter} seconds`);
+                
+                if (retryCount < this.maxRetries) {
+                    const waitTime = Math.min(this.rateLimitBackoff * Math.pow(2, retryCount), 10000); // Max 10 seconds
+                    console.log(`⏳ Waiting ${waitTime}ms before retry...`);
+                    
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                    return this.apiCall(endpoint, options, retryCount + 1);
+                } else {
+                    throw new Error(`Rate limited. Please wait ${retryAfter} seconds before trying again.`);
+                }
+            }
+            
+            // Reset backoff on successful request
+            if (response.ok) {
+                this.rateLimitBackoff = 1000;
+            }
             
             if (!response.ok) {
                 let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -168,11 +196,21 @@ class Calendar {
             
         } catch (error) {
             console.error('💥 API call failed:', error);
+            
+            // If it's a network error and we haven't retried too much, try again
+            if (error.message.includes('NetworkError') && retryCount < this.maxRetries) {
+                const waitTime = Math.min(this.rateLimitBackoff * Math.pow(2, retryCount), 5000);
+                console.log(`🔄 Network error, retrying in ${waitTime}ms...`);
+                
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                return this.apiCall(endpoint, options, retryCount + 1);
+            }
+            
             throw error;
         }
     }
 
-    // UPDATED: Enhanced event loading that works without authentication
+    // Enhanced event loading that works without authentication
     async loadEvents() {
         try {
             console.log('📅 Loading events...');
@@ -196,12 +234,165 @@ class Calendar {
             
         } catch (error) {
             console.error('❌ Error loading events from backend:', error);
+            
+            // Show user-friendly error message
+            if (error.message.includes('Rate limited')) {
+                this.showMessage('Too many requests. Please wait a moment before trying again.', 'warning');
+            } else if (error.message.includes('NetworkError')) {
+                this.showMessage('Network connection issue. Using cached events.', 'warning');
+            } else {
+                this.showMessage('Unable to load latest events. Showing sample events.', 'info');
+            }
+            
             console.log('🔄 Loading sample events as fallback');
             this.events = this.loadSampleEvents();
         }
     }
 
-    // UPDATED: Show event creator information
+    bindEvents() {
+        // Navigation buttons - with debouncing awareness
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (!this.isLoading) this.navigatePrev();
+        });
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (!this.isLoading) this.navigateNext();
+        });
+        document.getElementById('todayBtn').addEventListener('click', () => {
+            if (!this.isLoading) this.goToToday();
+        });
+
+        // View controls
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.switchView(e.target.dataset.view));
+        });
+
+        // Add event button
+        document.getElementById('addEventBtn').addEventListener('click', () => this.openEventModal());
+
+        // Event form
+        document.getElementById('eventForm').addEventListener('submit', (e) => this.saveEvent(e));
+
+        // Agenda filter
+        document.getElementById('agendaFilter').addEventListener('change', () => this.renderAgenda());
+
+        // Edit event button in details modal
+        document.getElementById('editEventBtn').addEventListener('click', () => this.editCurrentEvent());
+    }
+
+    // Check if navigation should be blocked (debouncing)
+    isNavigationBlocked() {
+        const now = Date.now();
+        if (now - this.lastNavigationTime < this.NAVIGATION_DEBOUNCE_MS) {
+            console.log('⏸️ Navigation blocked by debouncing');
+            return true;
+        }
+        this.lastNavigationTime = now;
+        return false;
+    }
+
+    // Debounced event loading
+    debouncedLoadEvents() {
+        if (this.navigationTimeout) {
+            clearTimeout(this.navigationTimeout);
+        }
+        
+        this.navigationTimeout = setTimeout(async () => {
+            this.showLoading(true);
+            try {
+                await this.loadEvents();
+                this.render();
+            } catch (error) {
+                console.error('Error in debounced load:', error);
+            } finally {
+                this.showLoading(false);
+            }
+        }, 200); // Wait 200ms after last navigation action
+    }
+
+    // Debounced navigation methods
+    async navigatePrev() {
+        if (this.isNavigationBlocked()) return;
+        
+        if (this.currentView === 'month') {
+            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+        } else if (this.currentView === 'week') {
+            this.currentDate.setDate(this.currentDate.getDate() - 7);
+        }
+        
+        this.debouncedLoadEvents();
+        this.updateCurrentMonth();
+    }
+
+    async navigateNext() {
+        if (this.isNavigationBlocked()) return;
+        
+        if (this.currentView === 'month') {
+            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+        } else if (this.currentView === 'week') {
+            this.currentDate.setDate(this.currentDate.getDate() + 7);
+        }
+        
+        this.debouncedLoadEvents();
+        this.updateCurrentMonth();
+    }
+
+    async goToToday() {
+        if (this.isNavigationBlocked()) return;
+        
+        const today = new Date();
+        const wasAlreadyToday = (
+            this.currentDate.getFullYear() === today.getFullYear() &&
+            this.currentDate.getMonth() === today.getMonth()
+        );
+        
+        if (wasAlreadyToday) {
+            console.log('📅 Already viewing current month, skipping API call');
+            return;
+        }
+        
+        this.currentDate = new Date();
+        this.debouncedLoadEvents();
+        this.updateCurrentMonth();
+    }
+
+    render() {
+        switch (this.currentView) {
+            case 'month':
+                this.renderMonth();
+                break;
+            case 'week':
+                this.renderWeek();
+                break;
+            case 'agenda':
+                this.renderAgenda();
+                break;
+        }
+    }
+
+    renderMonth() {
+        document.getElementById('monthView').style.display = 'block';
+        document.getElementById('weekView').style.display = 'none';
+        document.getElementById('agendaView').style.display = 'none';
+
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
+        
+        const firstDay = new Date(year, month, 1);
+        const startDate = new Date(firstDay);
+        startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+        for (let i = 0; i < 42; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            
+            const dayElement = this.createDayElement(date, month);
+            grid.appendChild(dayElement);
+        }
+    }
+
     createDayElement(date, currentMonth) {
         const day = document.createElement('div');
         day.className = 'calendar-day';
@@ -246,266 +437,7 @@ class Calendar {
         return day;
     }
 
-    // UPDATED: Enhanced event details with creator info
-    showEventDetails(event) {
-        console.log('👁️ Showing event details for:', event.title, 'ID:', event.id);
-        
-        const modal = document.getElementById('eventDetailsModal');
-        const content = document.getElementById('eventDetailsContent');
-        
-        document.getElementById('eventDetailsTitle').textContent = event.title;
-        
-        const eventDate = new Date(event.date);
-        const dateStr = eventDate.toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-
-        let creatorInfo = '';
-        if (event.createdBy && event.createdBy.name) {
-            creatorInfo = `
-                <div class="event-detail-item">
-                    <div class="event-detail-label">Created by</div>
-                    <div class="event-detail-value">${event.createdBy.name} (${event.createdBy.school || 'Unknown School'})</div>
-                </div>
-            `;
-        }
-
-        content.innerHTML = `
-            <div class="event-detail-item">
-                <div class="event-detail-label">Date & Time</div>
-                <div class="event-detail-value">${dateStr} ${event.time ? `at ${event.time}` : ''}</div>
-            </div>
-            <div class="event-detail-item">
-                <div class="event-detail-label">Type</div>
-                <div class="event-detail-value">${this.capitalizeFirst(event.type)}</div>
-            </div>
-            ${event.location ? `
-                <div class="event-detail-item">
-                    <div class="event-detail-label">Location</div>
-                    <div class="event-detail-value">${event.location}</div>
-                </div>
-            ` : ''}
-            ${event.organizer ? `
-                <div class="event-detail-item">
-                    <div class="event-detail-label">Organizer</div>
-                    <div class="event-detail-value">${event.organizer}</div>
-                </div>
-            ` : ''}
-            ${creatorInfo}
-            ${event.description ? `
-                <div class="event-detail-item">
-                    <div class="event-detail-label">Description</div>
-                    <div class="event-detail-value">${event.description}</div>
-                </div>
-            ` : ''}
-        `;
-
-        // Store the selected event ID for editing
-        this.selectedEventId = event.id;
-        
-        // Show/hide edit button based on permissions and authentication
-        const editBtn = document.getElementById('editEventBtn');
-        if (this.isAuthenticated && event.canEdit !== false) {
-            editBtn.style.display = 'inline-block';
-        } else {
-            editBtn.style.display = 'none';
-        }
-        
-        console.log('👁️ Event details modal opened, selectedEventId set to:', this.selectedEventId);
-        
-        modal.classList.add('show');
-    }
-
-    // UPDATED: Only allow opening event modal if authenticated
-    openEventModal(date = null) {
-        if (!this.isAuthenticated) {
-            this.showMessage('Please log in to create events', 'error');
-            return;
-        }
-        
-        console.log('🎯 Opening event modal for new event');
-        
-        const modal = document.getElementById('eventModal');
-        const form = document.getElementById('eventForm');
-        
-        // Reset all state
-        form.reset();
-        this.selectedEventId = null;
-        this.isEditMode = false;
-        
-        // Set date if provided
-        if (date) {
-            document.getElementById('eventDate').value = date.toISOString().split('T')[0];
-        }
-        
-        // Update modal for new event
-        document.getElementById('modalTitle').textContent = 'Add Event';
-        document.getElementById('deleteEventBtn').style.display = 'none';
-        document.getElementById('saveEventBtn').textContent = 'Save Event';
-        
-        modal.classList.add('show');
-    }
-
-    // UPDATED: Enhanced agenda rendering with creator info
-    renderAgenda() {
-        document.getElementById('monthView').style.display = 'none';
-        document.getElementById('weekView').style.display = 'none';
-        document.getElementById('agendaView').style.display = 'block';
-
-        const agendaList = document.getElementById('agendaList');
-        const filter = document.getElementById('agendaFilter').value;
-        
-        let filteredEvents = this.events;
-        if (filter !== 'all') {
-            filteredEvents = this.events.filter(event => event.type === filter);
-        }
-
-        filteredEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        agendaList.innerHTML = '';
-
-        if (filteredEvents.length === 0) {
-            agendaList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 2rem;">No events found.</p>';
-            return;
-        }
-
-        filteredEvents.forEach(event => {
-            const agendaItem = document.createElement('div');
-            agendaItem.className = `agenda-item ${event.type}`;
-            
-            const eventDate = new Date(event.date);
-            const dateStr = eventDate.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-
-            let creatorInfo = '';
-            if (event.createdBy && event.createdBy.name) {
-                creatorInfo = `👤 ${event.createdBy.name}`;
-            }
-
-            agendaItem.innerHTML = `
-                <div class="agenda-date">${dateStr} ${event.time ? `at ${event.time}` : ''}</div>
-                <div class="agenda-title">${event.title}</div>
-                <div class="agenda-details">
-                    ${event.location ? `📍 ${event.location}` : ''}
-                    ${event.organizer ? `👥 ${event.organizer}` : ''}
-                    ${creatorInfo ? `<br>${creatorInfo}` : ''}
-                </div>
-            `;
-
-            agendaItem.addEventListener('click', () => this.showEventDetails(event));
-            agendaList.appendChild(agendaItem);
-        });
-    }
-
-    // Rest of the methods remain the same...
-    bindEvents() {
-        // Navigation buttons
-        document.getElementById('prevBtn').addEventListener('click', () => this.navigatePrev());
-        document.getElementById('nextBtn').addEventListener('click', () => this.navigateNext());
-        document.getElementById('todayBtn').addEventListener('click', () => this.goToToday());
-
-        // View controls
-        document.querySelectorAll('.view-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => this.switchView(e.target.dataset.view));
-        });
-
-        // Add event button
-        document.getElementById('addEventBtn').addEventListener('click', () => this.openEventModal());
-
-        // Event form
-        document.getElementById('eventForm').addEventListener('submit', (e) => this.saveEvent(e));
-
-        // Agenda filter
-        document.getElementById('agendaFilter').addEventListener('change', () => this.renderAgenda());
-
-        // Edit event button in details modal
-        document.getElementById('editEventBtn').addEventListener('click', () => this.editCurrentEvent());
-    }
-
-    async navigatePrev() {
-        if (this.currentView === 'month') {
-            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
-        } else if (this.currentView === 'week') {
-            this.currentDate.setDate(this.currentDate.getDate() - 7);
-        }
-        
-        this.showLoading(true);
-        await this.loadEvents();
-        this.showLoading(false);
-        this.render();
-        this.updateCurrentMonth();
-    }
-
-    async navigateNext() {
-        if (this.currentView === 'month') {
-            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
-        } else if (this.currentView === 'week') {
-            this.currentDate.setDate(this.currentDate.getDate() + 7);
-        }
-        
-        this.showLoading(true);
-        await this.loadEvents();
-        this.showLoading(false);
-        this.render();
-        this.updateCurrentMonth();
-    }
-
-    async goToToday() {
-        this.currentDate = new Date();
-        this.showLoading(true);
-        await this.loadEvents();
-        this.showLoading(false);
-        this.render();
-        this.updateCurrentMonth();
-    }
-
-    render() {
-        switch (this.currentView) {
-            case 'month':
-                this.renderMonth();
-                break;
-            case 'week':
-                this.renderWeek();
-                break;
-            case 'agenda':
-                this.renderAgenda();
-                break;
-        }
-    }
-
-    renderMonth() {
-        document.getElementById('monthView').style.display = 'block';
-        document.getElementById('weekView').style.display = 'none';
-        document.getElementById('agendaView').style.display = 'none';
-
-        const grid = document.getElementById('calendarGrid');
-        grid.innerHTML = '';
-
-        const year = this.currentDate.getFullYear();
-        const month = this.currentDate.getMonth();
-        
-        const firstDay = new Date(year, month, 1);
-        const startDate = new Date(firstDay);
-        startDate.setDate(startDate.getDate() - firstDay.getDay());
-
-        for (let i = 0; i < 42; i++) {
-            const date = new Date(startDate);
-            date.setDate(startDate.getDate() + i);
-            
-            const dayElement = this.createDayElement(date, month);
-            grid.appendChild(dayElement);
-        }
-    }
-
     renderWeek() {
-        // Implementation remains the same...
         document.getElementById('monthView').style.display = 'none';
         document.getElementById('weekView').style.display = 'block';
         document.getElementById('agendaView').style.display = 'none';
@@ -586,6 +518,60 @@ class Calendar {
         weekGrid.appendChild(eventsGrid);
     }
 
+    renderAgenda() {
+        document.getElementById('monthView').style.display = 'none';
+        document.getElementById('weekView').style.display = 'none';
+        document.getElementById('agendaView').style.display = 'block';
+
+        const agendaList = document.getElementById('agendaList');
+        const filter = document.getElementById('agendaFilter').value;
+        
+        let filteredEvents = this.events;
+        if (filter !== 'all') {
+            filteredEvents = this.events.filter(event => event.type === filter);
+        }
+
+        filteredEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        agendaList.innerHTML = '';
+
+        if (filteredEvents.length === 0) {
+            agendaList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 2rem;">No events found.</p>';
+            return;
+        }
+
+        filteredEvents.forEach(event => {
+            const agendaItem = document.createElement('div');
+            agendaItem.className = `agenda-item ${event.type}`;
+            
+            const eventDate = new Date(event.date);
+            const dateStr = eventDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            let creatorInfo = '';
+            if (event.createdBy && event.createdBy.name) {
+                creatorInfo = `👤 ${event.createdBy.name}`;
+            }
+
+            agendaItem.innerHTML = `
+                <div class="agenda-date">${dateStr} ${event.time ? `at ${event.time}` : ''}</div>
+                <div class="agenda-title">${event.title}</div>
+                <div class="agenda-details">
+                    ${event.location ? `📍 ${event.location}` : ''}
+                    ${event.organizer ? `👥 ${event.organizer}` : ''}
+                    ${creatorInfo ? `<br>${creatorInfo}` : ''}
+                </div>
+            `;
+
+            agendaItem.addEventListener('click', () => this.showEventDetails(event));
+            agendaList.appendChild(agendaItem);
+        });
+    }
+
     getEventsForDate(date) {
         const dateStr = date.toISOString().split('T')[0];
         return this.events.filter(event => event.date === dateStr);
@@ -613,6 +599,108 @@ class Calendar {
     getDayName(dayIndex) {
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         return days[dayIndex];
+    }
+
+    // Only allow opening event modal if authenticated
+    openEventModal(date = null) {
+        if (!this.isAuthenticated) {
+            this.showMessage('Please log in to create events', 'error');
+            return;
+        }
+        
+        console.log('🎯 Opening event modal for new event');
+        
+        const modal = document.getElementById('eventModal');
+        const form = document.getElementById('eventForm');
+        
+        // Reset all state
+        form.reset();
+        this.selectedEventId = null;
+        this.isEditMode = false;
+        
+        // Set date if provided
+        if (date) {
+            document.getElementById('eventDate').value = date.toISOString().split('T')[0];
+        }
+        
+        // Update modal for new event
+        document.getElementById('modalTitle').textContent = 'Add Event';
+        document.getElementById('deleteEventBtn').style.display = 'none';
+        document.getElementById('saveEventBtn').textContent = 'Save Event';
+        
+        modal.classList.add('show');
+    }
+
+    showEventDetails(event) {
+        console.log('👁️ Showing event details for:', event.title, 'ID:', event.id);
+        
+        const modal = document.getElementById('eventDetailsModal');
+        const content = document.getElementById('eventDetailsContent');
+        
+        document.getElementById('eventDetailsTitle').textContent = event.title;
+        
+        const eventDate = new Date(event.date);
+        const dateStr = eventDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        let creatorInfo = '';
+        if (event.createdBy && event.createdBy.name) {
+            creatorInfo = `
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Created by</div>
+                    <div class="event-detail-value">${event.createdBy.name} (${event.createdBy.school || 'Unknown School'})</div>
+                </div>
+            `;
+        }
+
+        content.innerHTML = `
+            <div class="event-detail-item">
+                <div class="event-detail-label">Date & Time</div>
+                <div class="event-detail-value">${dateStr} ${event.time ? `at ${event.time}` : ''}</div>
+            </div>
+            <div class="event-detail-item">
+                <div class="event-detail-label">Type</div>
+                <div class="event-detail-value">${this.capitalizeFirst(event.type)}</div>
+            </div>
+            ${event.location ? `
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Location</div>
+                    <div class="event-detail-value">${event.location}</div>
+                </div>
+            ` : ''}
+            ${event.organizer ? `
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Organizer</div>
+                    <div class="event-detail-value">${event.organizer}</div>
+                </div>
+            ` : ''}
+            ${creatorInfo}
+            ${event.description ? `
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Description</div>
+                    <div class="event-detail-value">${event.description}</div>
+                </div>
+            ` : ''}
+        `;
+
+        // Store the selected event ID for editing
+        this.selectedEventId = event.id;
+        
+        // Show/hide edit button based on permissions and authentication
+        const editBtn = document.getElementById('editEventBtn');
+        if (this.isAuthenticated && event.canEdit !== false) {
+            editBtn.style.display = 'inline-block';
+        } else {
+            editBtn.style.display = 'none';
+        }
+        
+        console.log('👁️ Event details modal opened, selectedEventId set to:', this.selectedEventId);
+        
+        modal.classList.add('show');
     }
 
     editCurrentEvent() {
@@ -836,24 +924,34 @@ class Calendar {
 
         const messageDiv = document.createElement('div');
         messageDiv.className = `calendar-message ${type}`;
+        
+        const bgColor = type === 'success' ? '#27ae60' : 
+                       type === 'error' ? '#e74c3c' : 
+                       type === 'warning' ? '#f39c12' : '#3498db';
+                       
         messageDiv.style.cssText = `
-            background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : type === 'warning' ? '#f39c12' : '#3498db'};
+            background: ${bgColor};
             color: white;
             padding: 1rem 1.5rem;
             margin-bottom: 0.5rem;
             border-radius: 6px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             animation: slideIn 0.3s ease;
-            max-width: 300px;
+            max-width: 350px;
             word-wrap: break-word;
+            line-height: 1.4;
         `;
         messageDiv.textContent = message;
 
         messageContainer.appendChild(messageDiv);
 
+        // Auto-remove after delay (longer for warnings)
+        const removeDelay = type === 'warning' ? 8000 : 5000;
         setTimeout(() => {
-            messageDiv.remove();
-        }, 5000);
+            if (messageDiv.parentNode) {
+                messageDiv.remove();
+            }
+        }, removeDelay);
     }
 
     capitalizeFirst(str) {
