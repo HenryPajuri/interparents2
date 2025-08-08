@@ -1,0 +1,512 @@
+/* About Page Specific Styles */
+
+/* Page Hero Section */
+.page-hero {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: white;
+    padding: 6rem 0 4rem;
+    text-align: center;
+}
+
+.page-hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: 300;
+}
+
+.page-hero .subtitle {
+    font-size: 1.1rem;
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    opacity: 0.9;
+    line-height: 1.6;
+}
+
+/* Intro Section */
+.intro-section {
+    background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%);
+    border-radius: 12px;
+    padding: 2.5rem;
+    margin-bottom: 3rem;
+}
+
+.intro-section h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    border: none;
+    padding: 0;
+}
+
+.intro-section p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #555;
+    margin-bottom: 1.5rem;
+}
+
+/* Key Highlights */
+.key-highlights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.highlight-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #e8ecef;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.highlight-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+.highlight-card h3 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.highlight-card p {
+    color: #666;
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Purpose Section */
+.purpose-section {
+    margin-bottom: 3rem;
+}
+
+.purpose-section h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 0.5rem;
+}
+
+.participation-list {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    border-left: 4px solid #3498db;
+}
+
+.participation-list li {
+    margin-bottom: 0.8rem;
+    color: #555;
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+.participation-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* Structure Section */
+.structure-section {
+    margin-bottom: 3rem;
+}
+
+.structure-section h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 3px solid #e74c3c;
+    padding-bottom: 0.5rem;
+}
+
+.structure-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.structure-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    border: 1px solid #e8ecef;
+    position: relative;
+    overflow: hidden;
+}
+
+.structure-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+}
+
+.bureau-card::before {
+    background: linear-gradient(90deg, #3498db, #2980b9);
+}
+
+.coordination-card::before {
+    background: linear-gradient(90deg, #e74c3c, #c0392b);
+}
+
+.structure-card h3 {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.meeting-info {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    font-style: italic;
+    margin-bottom: 1.5rem;
+}
+
+.leadership-list,
+.working-groups {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.leader-item,
+.wg-item {
+    background: #f8f9fa;
+    padding: 0.8rem;
+    border-radius: 6px;
+    border-left: 3px solid #3498db;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.coordination-card .wg-item {
+    border-left-color: #e74c3c;
+}
+
+/* Representation Section */
+.representation-section {
+    margin-bottom: 3rem;
+}
+
+.representation-section h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 3px solid #f39c12;
+    padding-bottom: 0.5rem;
+}
+
+.engagement-info {
+    margin-top: 2rem;
+}
+
+.engagement-card {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.engagement-card h3 {
+    color: white;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.engagement-card p {
+    color: white;
+    opacity: 0.95;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* BAC Section */
+.bac-section {
+    margin-bottom: 3rem;
+}
+
+.bac-section h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 3px solid #27ae60;
+    padding-bottom: 0.5rem;
+}
+
+.bac-support {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.support-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    border: 1px solid #e8ecef;
+    border-top: 4px solid #27ae60;
+}
+
+.support-card h3 {
+    color: #2c3e50;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.support-card p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.support-link {
+    display: inline-block;
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.support-link:hover {
+    background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+}
+
+/* Meetings Section */
+.meetings-section {
+    margin-bottom: 3rem;
+}
+
+.meetings-section h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 3px solid #9b59b6;
+    padding-bottom: 0.5rem;
+}
+
+.meetings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.meeting-type {
+    background: white;
+    border-radius: 12px;
+    padding: 1.8rem;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    border: 1px solid #e8ecef;
+    border-top: 4px solid #9b59b6;
+}
+
+.meeting-type h3 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.meeting-type p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.meeting-schedule {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.schedule-item {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid #9b59b6;
+    padding-left: 1rem;
+    font-size: 0.95rem;
+}
+
+.schedule-item:last-child {
+    margin-bottom: 0;
+}
+
+.additional-info {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    font-style: italic;
+    margin-top: 1rem;
+}
+
+.official-meetings {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.official-item {
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+    border-left: 3px solid #9b59b6;
+    padding-left: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.official-item:last-child {
+    margin-bottom: 0;
+}
+
+/* Commitment Section */
+.commitment-section {
+    background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+    color: white;
+    padding: 3rem;
+    border-radius: 12px;
+    margin-bottom: 3rem;
+}
+
+.commitment-section h2 {
+    color: white;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    border: none;
+    padding: 0;
+    text-align: center;
+}
+
+.commitment-section > p {
+    color: white;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    opacity: 0.95;
+    text-align: center;
+    font-size: 1.05rem;
+}
+
+.commitment-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.commitment-card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 1.8rem;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: background 0.3s ease;
+}
+
+.commitment-card:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.commitment-card h3 {
+    color: white;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.commitment-card p {
+    color: white;
+    opacity: 0.9;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-hero {
+        padding: 4rem 0 3rem;
+    }
+    
+    .page-hero h1 {
+        font-size: 2rem;
+    }
+    
+    .key-highlights {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .structure-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .structure-card {
+        padding: 1.5rem;
+    }
+    
+    .meetings-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .bac-support {
+        grid-template-columns: 1fr;
+    }
+    
+    .commitment-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .commitment-section {
+        padding: 2rem;
+    }
+    
+    .intro-section {
+        padding: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .structure-card {
+        padding: 1rem;
+    }
+    
+    .meeting-type {
+        padding: 1.5rem;
+    }
+    
+    .intro-section {
+        padding: 1.5rem;
+    }
+    
+    .engagement-card {
+        padding: 1.5rem;
+    }
+    
+    .support-card {
+        padding: 1.5rem;
+    }
+}
