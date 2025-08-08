@@ -47,10 +47,12 @@ app.use(limiter);
 app.use(express.json());
 app.use(cookieParser());
 
+
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'https://interparentsfrontend.onrender.com',
     credentials: true
 }));
+
 
 // Serve PDF files statically
 app.use('/pdf', express.static(path.join(__dirname, 'pdf'), {
@@ -202,39 +204,7 @@ const verifyToken = (token) => {
     return jwt.verify(token, process.env.JWT_SECRET || 'interparents-secret-key-change-in-production');
 };
 
-// REQUIRED Authentication middleware (for routes that need authentication)
-const auth = async (req, res, next) => {
-    try {
-        const token = req.cookies.token || req.header('Authorization')?.replace('Bearer ', '');
-        
-        if (!token) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Access denied. No token provided.' 
-            });
-        }
-
-        const decoded = verifyToken(token);
-        const user = await User.findById(decoded.userId).select('-password');
-        
-        if (!user || !user.isActive) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Invalid token or user not active.' 
-            });
-        }
-
-        req.user = user;
-        next();
-    } catch (error) {
-        res.status(401).json({ 
-            success: false, 
-            message: 'Invalid token.' 
-        });
-    }
-};
-
-// OPTIONAL Authentication middleware (allows both authenticated and non-authenticated access)
+// Authentication middleware
 const optionalAuth = async (req, res, next) => {
     try {
         const token = req.cookies.token || req.header('Authorization')?.replace('Bearer ', '');
@@ -263,57 +233,7 @@ const optionalAuth = async (req, res, next) => {
     }
 };
 
-const adminAuth = (req, res, next) => {
-    if (req.user.role !== 'admin' && req.user.role !== 'executive') {
-        return res.status(403).json({ 
-            success: false, 
-            message: 'Access denied. Admin or Executive privileges required.' 
-        });
-    }
-    next();
-};
-
-// File upload configuration
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadDir = path.join(__dirname, 'pdf');
-        
-        const fs = require('fs');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        // Generate unique filename while preserving extension
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        cb(null, 'comm-' + uniqueSuffix + ext);
-    }
-});
-
-const fileFilter = (req, file, cb) => {
-    // Only allow PDF files
-    if (file.mimetype === 'application/pdf') {
-        cb(null, true);
-    } else {
-        cb(new Error('Only PDF files are allowed'), false);
-    }
-};
-
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB limit
-    }
-});
-
-// ========== EVENTS ROUTES ==========
-console.log('📅 Registering Events routes...');
-
-// GET /api/events - Now accessible without authentication for public events
+// UPDATED: GET /api/events - Now accessible without authentication for public events
 app.get('/api/events', optionalAuth, async (req, res) => {
     try {
         const userRole = req.user ? req.user.role : 'guest';
@@ -377,6 +297,124 @@ app.get('/api/events', optionalAuth, async (req, res) => {
                 } : null,
                 isPublic: event.isPublic,
                 canEdit: req.user ? (event.canEdit ? event.canEdit(req.user.id, req.user.role) : true) : false,
+                createdAt: event.createdAt,
+                updatedAt: event.updatedAt
+            }))
+        });
+    } catch (error) {
+        console.error('Error fetching events:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching events',
+            error: error.message
+        });
+    }
+});
+
+const adminAuth = (req, res, next) => {
+    if (req.user.role !== 'admin' && req.user.role !== 'executive') {
+        return res.status(403).json({ 
+            success: false, 
+            message: 'Access denied. Admin or Executive privileges required.' 
+        });
+    }
+    next();
+};
+
+// File upload configuration - UPDATED for Render
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadDir = path.join(__dirname, 'pdf');
+        
+        const fs = require('fs');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        // Generate unique filename while preserving extension
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, 'comm-' + uniqueSuffix + ext);
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    // Only allow PDF files
+    if (file.mimetype === 'application/pdf') {
+        cb(null, true);
+    } else {
+        cb(new Error('Only PDF files are allowed'), false);
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+    }
+});
+// Routes
+
+console.log('📅 Registering Events routes...');
+
+app.get('/api/events', auth, async (req, res) => {
+    try {
+        console.log(`📅 GET /api/events called by user: ${req.user.email} (${req.user.role})`);
+        
+        const { startDate, endDate, type, month, year } = req.query;
+        let query = {};
+        
+        // Filter by date range
+        if (startDate && endDate) {
+            query.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        } else if (month && year) {
+            const start = new Date(year, month - 1, 1);
+            const end = new Date(year, month, 0);
+            query.date = {
+                $gte: start,
+                $lte: end
+            };
+        }
+        
+        // Filter by event type
+        if (type && type !== 'all') {
+            query.type = type;
+        }
+        
+        // Non-admin users only see public events
+        if (req.user.role === 'member') {
+            query.isPublic = true;
+        }
+        
+        console.log('Query filters:', query);
+        
+        const events = await Event.find(query)
+            .populate('createdBy', 'name email school')
+            .sort({ date: 1, time: 1 });
+        
+        console.log(`Found ${events.length} events`);
+        
+        res.json({
+            success: true,
+            events: events.map(event => ({
+                id: event._id,
+                title: event.title,
+                type: event.type,
+                date: event.formattedDate || event.date.toISOString().split('T')[0],
+                time: event.time,
+                location: event.location,
+                description: event.description,
+                organizer: event.organizer,
+                createdBy: event.createdBy,
+                isPublic: event.isPublic,
+                canEdit: event.canEdit ? event.canEdit(req.user.id, req.user.role) : true,
                 createdAt: event.createdAt,
                 updatedAt: event.updatedAt
             }))
@@ -605,9 +643,6 @@ app.delete('/api/events/:id', auth, async (req, res) => {
 });
 
 console.log('✅ Events routes registered successfully');
-
-// ========== AUTHENTICATION ROUTES ==========
-
 app.post('/api/auth/login', loginLimiter, [
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 6 })
@@ -679,6 +714,7 @@ app.post('/api/auth/login', loginLimiter, [
         });
     }
 });
+
 
 app.post('/api/auth/logout', (req, res) => {
     res.clearCookie('token');
@@ -845,6 +881,7 @@ app.delete('/api/communications/:id', auth, adminAuth, async (req, res) => {
             });
         }
 
+
         const filePath = path.join(__dirname, 'pdf', communication.filename);
         try {
             await fs.unlink(filePath);
@@ -867,8 +904,6 @@ app.delete('/api/communications/:id', auth, adminAuth, async (req, res) => {
         });
     }
 });
-
-// ========== USER MANAGEMENT ROUTES ==========
 
 app.get('/api/users', auth, adminAuth, async (req, res) => {
     try {
@@ -944,6 +979,7 @@ app.post('/api/users', auth, adminAuth, [
     }
 });
 
+
 app.delete('/api/users/:id', auth, adminAuth, async (req, res) => {
     try {
         const userId = req.params.id;
@@ -979,8 +1015,6 @@ app.delete('/api/users/:id', auth, adminAuth, async (req, res) => {
     }
 });
 
-// ========== UTILITY ROUTES ==========
-
 app.get('/api/health', (req, res) => {
     res.json({
         success: true,
@@ -997,14 +1031,11 @@ app.get('/', (req, res) => {
         endpoints: {
             health: '/api/health',
             auth: '/api/auth/*',
-            events: '/api/events',
             communications: '/api/communications',
             users: '/api/users'
         }
     });
 });
-
-// ========== ERROR HANDLING ==========
 
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
@@ -1030,14 +1061,13 @@ app.use((err, req, res, next) => {
     });
 });
 
+
 app.use('*', (req, res) => {
     res.status(404).json({
         success: false,
         message: 'Route not found'
     });
 });
-
-// ========== START SERVER ==========
 
 const startServer = async () => {
     await connectDB();
