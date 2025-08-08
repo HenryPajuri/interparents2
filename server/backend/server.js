@@ -286,7 +286,6 @@ const upload = multer({
 
 console.log('📅 Registering Events routes...');
 
-// Get all events
 app.get('/api/events', auth, async (req, res) => {
     try {
         console.log(`📅 GET /api/events called by user: ${req.user.email} (${req.user.role})`);
@@ -355,63 +354,7 @@ app.get('/api/events', auth, async (req, res) => {
     }
 });
 
-// Get single event
-app.get('/api/events/:id', auth, async (req, res) => {
-    try {
-        console.log(`📅 GET /api/events/${req.params.id} called by user: ${req.user.email}`);
-        
-        const event = await Event.findById(req.params.id)
-            .populate('createdBy', 'name email school');
-        
-        if (!event) {
-            return res.status(404).json({
-                success: false,
-                message: 'Event not found'
-            });
-        }
-        
-        // Check if user can view this event
-        if (!event.isPublic && req.user.role === 'member' && event.createdBy._id.toString() !== req.user.id) {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied'
-            });
-        }
-        
-        res.json({
-            success: true,
-            event: {
-                id: event._id,
-                title: event.title,
-                type: event.type,
-                date: event.formattedDate || event.date.toISOString().split('T')[0],
-                time: event.time,
-                location: event.location,
-                description: event.description,
-                organizer: event.organizer,
-                createdBy: event.createdBy,
-                isPublic: event.isPublic,
-                canEdit: event.canEdit ? event.canEdit(req.user.id, req.user.role) : true,
-                createdAt: event.createdAt,
-                updatedAt: event.updatedAt
-            }
-        });
-    } catch (error) {
-        console.error('Error fetching event:', error);
-        if (error.kind === 'ObjectId') {
-            return res.status(404).json({
-                success: false,
-                message: 'Event not found'
-            });
-        }
-        res.status(500).json({
-            success: false,
-            message: 'Server error while fetching event'
-        });
-    }
-});
-
-// Create new event
+// POST /api/events - Create new event
 app.post('/api/events', [
     auth,
     body('title').notEmpty().withMessage('Title is required'),
@@ -423,7 +366,6 @@ app.post('/api/events', [
         console.log(`📅 POST /api/events called by user: ${req.user.email} (${req.user.role})`);
         console.log('Request body:', req.body);
         
-        // Check for validation errors
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             console.log('Validation errors:', errors.array());
@@ -485,7 +427,7 @@ app.post('/api/events', [
     }
 });
 
-// Update event
+// PUT /api/events/:id - Update event
 app.put('/api/events/:id', [
     auth,
     body('title').optional().notEmpty().withMessage('Title cannot be empty'),
@@ -514,7 +456,7 @@ app.put('/api/events/:id', [
             });
         }
         
-        // Check if user can edit
+        // Check if user can edit - flexible permission check
         const canEdit = event.canEdit ? event.canEdit(req.user.id, req.user.role) : 
                         (req.user.role === 'admin' || req.user.role === 'executive' || 
                          event.createdBy.toString() === req.user.id.toString());
@@ -576,7 +518,7 @@ app.put('/api/events/:id', [
     }
 });
 
-// Delete event
+// DELETE /api/events/:id - Delete event
 app.delete('/api/events/:id', auth, async (req, res) => {
     try {
         console.log(`📅 DELETE /api/events/${req.params.id} called by user: ${req.user.email}`);
@@ -590,7 +532,7 @@ app.delete('/api/events/:id', auth, async (req, res) => {
             });
         }
         
-        // Check if user can delete
+        // Check if user can delete - flexible permission check
         const canEdit = event.canEdit ? event.canEdit(req.user.id, req.user.role) : 
                         (req.user.role === 'admin' || req.user.role === 'executive' || 
                          event.createdBy.toString() === req.user.id.toString());
@@ -626,7 +568,6 @@ app.delete('/api/events/:id', auth, async (req, res) => {
 });
 
 console.log('✅ Events routes registered successfully');
-
 app.post('/api/auth/login', loginLimiter, [
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 6 })
