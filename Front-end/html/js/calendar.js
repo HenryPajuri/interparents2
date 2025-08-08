@@ -1,87 +1,133 @@
-// Calendar functionality for INTERPARENTS
+// Calendar functionality for INTERPARENTS with MongoDB integration
 class Calendar {
     constructor() {
         this.currentDate = new Date();
         this.currentView = 'month';
-        this.events = this.loadSampleEvents(); // In production, this would load from backend
+        this.events = [];
         this.selectedEventId = null;
+        // Use your backend API URL - update this to match your backend deployment
+        this.API_BASE = 'https://interparents-1.onrender.com/api';
+        this.isLoading = false;
         
         this.init();
     }
 
-    init() {
+    async init() {
         this.bindEvents();
+        this.showLoading(true);
+        await this.loadEvents();
+        this.showLoading(false);
         this.render();
         this.updateCurrentMonth();
     }
 
-    // Load sample events for demonstration
+    // Load events from backend API
+    async loadEvents() {
+        try {
+            const currentYear = this.currentDate.getFullYear();
+            const currentMonth = this.currentDate.getMonth() + 1;
+            
+            const response = await fetch(`${this.API_BASE}/events?year=${currentYear}&month=${currentMonth}`, {
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    this.redirectToLogin();
+                    return;
+                }
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                this.events = data.events || [];
+                console.log('Loaded events from backend:', this.events.length);
+            } else {
+                throw new Error(data.message || 'Failed to load events');
+            }
+        } catch (error) {
+            console.error('Error loading events:', error);
+            this.showMessage('Failed to load events from server. Showing sample events.', 'warning');
+            
+            // Fallback to sample events if API fails
+            this.events = this.loadSampleEvents();
+        }
+    }
+
+    // Load sample events as fallback
     loadSampleEvents() {
-        const today = new Date();
-        const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-        
+        console.log('Loading sample events as fallback');
         return [
             {
-                id: '1',
+                id: 'sample-1',
                 title: 'INTERPARENTS Bureau Meeting',
                 type: 'meeting',
                 date: '2025-01-15',
                 time: '14:00',
                 location: 'Brussels, Belgium',
                 description: 'Weekly Bureau meeting to discuss ongoing initiatives and upcoming Board of Governors meeting.',
-                organizer: 'INTERPARENTS Bureau'
+                organizer: 'INTERPARENTS Bureau',
+                canEdit: false
             },
             {
-                id: '2',
+                id: 'sample-2',
                 title: 'Joint Teaching Committee Meeting',
                 type: 'meeting',
                 date: '2025-02-12',
                 time: '09:00',
                 location: 'Brussels, Belgium',
                 description: 'JTC meeting with inspectors from all Member States and representatives of all stakeholders.',
-                organizer: 'European Schools Office'
+                organizer: 'European Schools Office',
+                canEdit: false
             },
             {
-                id: '3',
+                id: 'sample-3',
                 title: 'Parent Engagement Webinar',
                 type: 'webinar',
                 date: '2025-01-22',
                 time: '16:00',
                 location: 'Online',
                 description: 'Webinar on improving parent-school communication strategies.',
-                organizer: 'Parent Engagement Committee'
-            },
-            {
-                id: '4',
-                title: 'Board of Governors Meeting',
-                type: 'meeting',
-                date: '2025-04-15',
-                time: '10:00',
-                location: 'Host Country TBD',
-                description: 'BoG meeting with EU member states delegations and stakeholder representatives.',
-                organizer: 'European Schools Office'
-            },
-            {
-                id: '5',
-                title: 'BAC Exams Period Starts',
-                type: 'deadline',
-                date: '2025-05-01',
-                time: '',
-                location: 'All European Schools',
-                description: 'Beginning of BAC examination period across all European Schools.',
-                organizer: 'European Schools Office'
-            },
-            {
-                id: '6',
-                title: 'Digital Learning Conference',
-                type: 'conference',
-                date: '2025-03-08',
-                time: '09:00',
-                location: 'Luxembourg',
-                description: 'Annual conference on technology integration in European Schools.',
-                organizer: 'Digital Learning Committee'
+                organizer: 'Parent Engagement Committee',
+                canEdit: false
             }
         ];
+    }
+
+    // Utility method for making API calls
+    async apiCall(endpoint, options = {}) {
+        const defaultOptions = {
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+
+        const mergedOptions = { ...defaultOptions, ...options };
+
+        try {
+            const response = await fetch(`${this.API_BASE}${endpoint}`, mergedOptions);
+            
+            if (!response.ok) {
+                if (response.status === 401) {
+                    this.redirectToLogin();
+                    return null;
+                }
+                
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('API call failed:', error);
+            throw error;
+        }
     }
 
     bindEvents() {
@@ -106,6 +152,43 @@ class Calendar {
 
         // Edit event button in details modal
         document.getElementById('editEventBtn').addEventListener('click', () => this.editCurrentEvent());
+    }
+
+    async navigatePrev() {
+        if (this.currentView === 'month') {
+            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+        } else if (this.currentView === 'week') {
+            this.currentDate.setDate(this.currentDate.getDate() - 7);
+        }
+        
+        this.showLoading(true);
+        await this.loadEvents();
+        this.showLoading(false);
+        this.render();
+        this.updateCurrentMonth();
+    }
+
+    async navigateNext() {
+        if (this.currentView === 'month') {
+            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+        } else if (this.currentView === 'week') {
+            this.currentDate.setDate(this.currentDate.getDate() + 7);
+        }
+        
+        this.showLoading(true);
+        await this.loadEvents();
+        this.showLoading(false);
+        this.render();
+        this.updateCurrentMonth();
+    }
+
+    async goToToday() {
+        this.currentDate = new Date();
+        this.showLoading(true);
+        await this.loadEvents();
+        this.showLoading(false);
+        this.render();
+        this.updateCurrentMonth();
     }
 
     render() {
@@ -135,7 +218,6 @@ class Calendar {
         
         // Get first day of month and calculate starting date
         const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
         const startDate = new Date(firstDay);
         startDate.setDate(startDate.getDate() - firstDay.getDay());
 
@@ -327,32 +409,6 @@ class Calendar {
         return this.events.filter(event => event.date === dateStr);
     }
 
-    navigatePrev() {
-        if (this.currentView === 'month') {
-            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
-        } else if (this.currentView === 'week') {
-            this.currentDate.setDate(this.currentDate.getDate() - 7);
-        }
-        this.render();
-        this.updateCurrentMonth();
-    }
-
-    navigateNext() {
-        if (this.currentView === 'month') {
-            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
-        } else if (this.currentView === 'week') {
-            this.currentDate.setDate(this.currentDate.getDate() + 7);
-        }
-        this.render();
-        this.updateCurrentMonth();
-    }
-
-    goToToday() {
-        this.currentDate = new Date();
-        this.render();
-        this.updateCurrentMonth();
-    }
-
     switchView(view) {
         this.currentView = view;
         
@@ -443,6 +499,15 @@ class Calendar {
         `;
 
         this.selectedEventId = event.id;
+        
+        // Show/hide edit button based on permissions
+        const editBtn = document.getElementById('editEventBtn');
+        if (event.canEdit !== false) {
+            editBtn.style.display = 'inline-block';
+        } else {
+            editBtn.style.display = 'none';
+        }
+        
         modal.classList.add('show');
     }
 
@@ -450,14 +515,16 @@ class Calendar {
         if (!this.selectedEventId) return;
         
         const event = this.events.find(e => e.id === this.selectedEventId);
-        if (!event) return;
+        if (!event || event.canEdit === false) {
+            this.showMessage('You do not have permission to edit this event.', 'error');
+            return;
+        }
         
         // Close details modal
         this.closeEventDetailsModal();
         
         // Open edit modal
         const modal = document.getElementById('eventModal');
-        const form = document.getElementById('eventForm');
         
         // Populate form with event data
         document.getElementById('eventTitle').value = event.title;
@@ -479,12 +546,13 @@ class Calendar {
         modal.classList.add('show');
     }
 
-    saveEvent(e) {
+    async saveEvent(e) {
         e.preventDefault();
+        
+        if (this.isLoading) return;
         
         const formData = new FormData(e.target);
         const eventData = {
-            id: this.selectedEventId || Date.now().toString(),
             title: formData.get('title'),
             type: formData.get('type'),
             date: formData.get('date'),
@@ -494,35 +562,146 @@ class Calendar {
             organizer: formData.get('organizer')
         };
 
-        if (this.selectedEventId) {
-            // Update existing event
-            const index = this.events.findIndex(e => e.id === this.selectedEventId);
-            if (index !== -1) {
-                this.events[index] = eventData;
-            }
-        } else {
-            // Add new event
-            this.events.push(eventData);
-        }
+        // Set loading state
+        this.setModalLoadingState(true);
 
-        this.closeEventModal();
-        this.render();
-        
-        // In production, you would save to backend here
-        // await this.saveToBackend(eventData);
+        try {
+            let response;
+            
+            if (this.selectedEventId) {
+                // Update existing event
+                response = await this.apiCall(`/events/${this.selectedEventId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(eventData)
+                });
+            } else {
+                // Create new event
+                response = await this.apiCall('/events', {
+                    method: 'POST',
+                    body: JSON.stringify(eventData)
+                });
+            }
+
+            if (response && response.success) {
+                this.showMessage(response.message || 'Event saved successfully!', 'success');
+                this.closeEventModal();
+                
+                // Reload events to get updated data
+                await this.loadEvents();
+                this.render();
+            } else {
+                throw new Error(response?.message || 'Failed to save event');
+            }
+        } catch (error) {
+            console.error('Error saving event:', error);
+            this.showMessage(error.message || 'Failed to save event. Please try again.', 'error');
+        } finally {
+            this.setModalLoadingState(false);
+        }
     }
 
-    deleteEvent() {
+    async deleteEvent() {
         if (!this.selectedEventId) return;
         
-        if (confirm('Are you sure you want to delete this event?')) {
-            this.events = this.events.filter(e => e.id !== this.selectedEventId);
-            this.closeEventModal();
-            this.render();
-            
-            // In production, you would delete from backend here
-            // await this.deleteFromBackend(this.selectedEventId);
+        if (!confirm('Are you sure you want to delete this event?')) {
+            return;
         }
+
+        this.setModalLoadingState(true);
+
+        try {
+            const response = await this.apiCall(`/events/${this.selectedEventId}`, {
+                method: 'DELETE'
+            });
+
+            if (response && response.success) {
+                this.showMessage('Event deleted successfully', 'success');
+                this.closeEventModal();
+                
+                // Reload events to get updated data
+                await this.loadEvents();
+                this.render();
+            } else {
+                throw new Error(response?.message || 'Failed to delete event');
+            }
+        } catch (error) {
+            console.error('Error deleting event:', error);
+            this.showMessage(error.message || 'Failed to delete event. Please try again.', 'error');
+        } finally {
+            this.setModalLoadingState(false);
+        }
+    }
+
+    setModalLoadingState(loading) {
+        this.isLoading = loading;
+        const saveBtn = document.getElementById('saveEventBtn');
+        const deleteBtn = document.getElementById('deleteEventBtn');
+        
+        if (loading) {
+            saveBtn.disabled = true;
+            deleteBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="spinner"></span> Saving...';
+        } else {
+            saveBtn.disabled = false;
+            deleteBtn.disabled = false;
+            saveBtn.textContent = this.selectedEventId ? 'Update Event' : 'Save Event';
+        }
+    }
+
+    showLoading(show) {
+        const calendarContainer = document.querySelector('.calendar-container');
+        
+        if (show) {
+            if (!document.querySelector('.calendar-loading')) {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'calendar-loading';
+                loadingDiv.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #7f8c8d;">
+                        <div class="spinner" style="margin: 0 auto 1rem;"></div>
+                        Loading calendar...
+                    </div>
+                `;
+                calendarContainer.appendChild(loadingDiv);
+            }
+        } else {
+            const loadingDiv = document.querySelector('.calendar-loading');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
+        }
+    }
+
+    showMessage(message, type = 'info') {
+        // Create or get message container
+        let messageContainer = document.getElementById('calendarMessages');
+        if (!messageContainer) {
+            messageContainer = document.createElement('div');
+            messageContainer.id = 'calendarMessages';
+            messageContainer.style.cssText = 'position: fixed; top: 100px; right: 20px; z-index: 10000;';
+            document.body.appendChild(messageContainer);
+        }
+
+        // Create message element
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `calendar-message ${type}`;
+        messageDiv.style.cssText = `
+            background: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : type === 'warning' ? '#f39c12' : '#3498db'};
+            color: white;
+            padding: 1rem 1.5rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        `;
+        messageDiv.textContent = message;
+
+        messageContainer.appendChild(messageDiv);
+
+        // Remove message after 5 seconds
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 5000);
     }
 
     capitalizeFirst(str) {
@@ -531,20 +710,31 @@ class Calendar {
 
     closeEventModal() {
         document.getElementById('eventModal').classList.remove('show');
+        this.selectedEventId = null;
     }
 
     closeEventDetailsModal() {
         document.getElementById('eventDetailsModal').classList.remove('show');
+        this.selectedEventId = null;
+    }
+
+    redirectToLogin() {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
     }
 }
 
 // Global functions for modal closing
 function closeEventModal() {
-    document.getElementById('eventModal').classList.remove('show');
+    if (window.calendar) {
+        window.calendar.closeEventModal();
+    }
 }
 
 function closeEventDetailsModal() {
-    document.getElementById('eventDetailsModal').classList.remove('show');
+    if (window.calendar) {
+        window.calendar.closeEventDetailsModal();
+    }
 }
 
 // Initialize calendar when DOM is loaded
@@ -557,4 +747,30 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.classList.remove('show');
         }
     });
+    
+    // Add CSS for animations
+    if (!document.querySelector('#calendar-animations')) {
+        const style = document.createElement('style');
+        style.id = 'calendar-animations';
+        style.textContent = `
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateX(100%); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+            .spinner {
+                width: 20px;
+                height: 20px;
+                border: 2px solid #e8ecef;
+                border-top: 2px solid #3498db;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                display: inline-block;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
 });

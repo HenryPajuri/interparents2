@@ -39,12 +39,10 @@ app.use(limiter);
 app.use(express.json());
 app.use(cookieParser());
 
-
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'https://interparentsfrontend.onrender.com',
     credentials: true
 }));
-
 
 // Serve PDF files statically
 app.use('/pdf', express.static(path.join(__dirname, 'pdf'), {
@@ -70,6 +68,8 @@ const connectDB = async () => {
         process.exit(1);
     }
 };
+
+// ========== SCHEMAS ==========
 
 const userSchema = new mongoose.Schema({
     email: {
@@ -163,6 +163,88 @@ const communicationSchema = new mongoose.Schema({
     }
 });
 
+// ========== NEW EVENT SCHEMA ==========
+const eventSchema = new mongoose.Schema({
+    title: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    type: {
+        type: String,
+        required: true,
+        enum: ['meeting', 'webinar', 'conference', 'deadline'],
+        default: 'meeting'
+    },
+    date: {
+        type: Date,
+        required: true
+    },
+    time: {
+        type: String,
+        required: false // Optional field for time (HH:MM format)
+    },
+    location: {
+        type: String,
+        required: false,
+        trim: true
+    },
+    description: {
+        type: String,
+        required: false,
+        trim: true
+    },
+    organizer: {
+        type: String,
+        required: false,
+        trim: true
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    school: {
+        type: String,
+        required: false
+    },
+    isPublic: {
+        type: Boolean,
+        default: true
+    },
+    attendees: [{
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        status: {
+            type: String,
+            enum: ['attending', 'not_attending', 'maybe'],
+            default: 'attending'
+        }
+    }]
+}, {
+    timestamps: true
+});
+
+// Index for efficient querying by date
+eventSchema.index({ date: 1 });
+eventSchema.index({ type: 1 });
+eventSchema.index({ createdBy: 1 });
+
+// Virtual for formatted date
+eventSchema.virtual('formattedDate').get(function() {
+    return this.date.toISOString().split('T')[0];
+});
+
+// Method to check if user can edit this event
+eventSchema.methods.canEdit = function(userId, userRole) {
+    if (userRole === 'admin' || userRole === 'executive') {
+        return true;
+    }
+    return this.createdBy.toString() === userId.toString();
+};
+
 // Hash password before saving
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();
@@ -180,10 +262,12 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
 
+// ========== MODELS ==========
 const User = mongoose.model('User', userSchema);
 const Communication = mongoose.model('Communication', communicationSchema);
+const Event = mongoose.model('Event', eventSchema);
 
-// JWT Helper functions
+// ========== JWT Helper functions ==========
 const generateToken = (userId) => {
     return jwt.sign(
         { userId },
@@ -196,7 +280,7 @@ const verifyToken = (token) => {
     return jwt.verify(token, process.env.JWT_SECRET || 'interparents-secret-key-change-in-production');
 };
 
-// Authentication middleware
+// ========== MIDDLEWARE ==========
 const auth = async (req, res, next) => {
     try {
         const token = req.cookies.token || req.header('Authorization')?.replace('Bearer ', '');
@@ -238,7 +322,7 @@ const adminAuth = (req, res, next) => {
     next();
 };
 
-// File upload configuration - UPDATED for Render
+// File upload configuration
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const uploadDir = path.join(__dirname, 'pdf');
@@ -251,7 +335,6 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
-        // Generate unique filename while preserving extension
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = path.extname(file.originalname);
         cb(null, 'comm-' + uniqueSuffix + ext);
@@ -259,7 +342,6 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    // Only allow PDF files
     if (file.mimetype === 'application/pdf') {
         cb(null, true);
     } else {
@@ -274,7 +356,8 @@ const upload = multer({
         fileSize: 10 * 1024 * 1024 // 10MB limit
     }
 });
-// Routes
+
+// ========== AUTH ROUTES ==========
 
 app.post('/api/auth/login', loginLimiter, [
     body('email').isEmail().normalizeEmail(),
@@ -348,7 +431,6 @@ app.post('/api/auth/login', loginLimiter, [
     }
 });
 
-
 app.post('/api/auth/logout', (req, res) => {
     res.clearCookie('token');
     res.json({
@@ -372,7 +454,7 @@ app.get('/api/auth/me', auth, (req, res) => {
     });
 });
 
-// ========== COMMUNICATION MANAGEMENT ROUTES ==========
+// ========== COMMUNICATION ROUTES ==========
 
 app.get('/api/communications', async (req, res) => {
     try {
@@ -441,7 +523,6 @@ app.post('/api/communications', auth, adminAuth, upload.single('pdf'), [
         });
 
     } catch (error) {
-        // Delete uploaded file if database save fails
         if (req.file) {
             await fs.unlink(req.file.path).catch(console.error);
         }
@@ -514,7 +595,6 @@ app.delete('/api/communications/:id', auth, adminAuth, async (req, res) => {
             });
         }
 
-
         const filePath = path.join(__dirname, 'pdf', communication.filename);
         try {
             await fs.unlink(filePath);
@@ -537,6 +617,8 @@ app.delete('/api/communications/:id', auth, adminAuth, async (req, res) => {
         });
     }
 });
+
+// ========== USER ROUTES ==========
 
 app.get('/api/users', auth, adminAuth, async (req, res) => {
     try {
@@ -612,7 +694,6 @@ app.post('/api/users', auth, adminAuth, [
     }
 });
 
-
 app.delete('/api/users/:id', auth, adminAuth, async (req, res) => {
     try {
         const userId = req.params.id;
@@ -648,6 +729,371 @@ app.delete('/api/users/:id', auth, adminAuth, async (req, res) => {
     }
 });
 
+// ========== EVENTS ROUTES ==========
+
+// Get all events (with optional filtering)
+app.get('/api/events', auth, async (req, res) => {
+    try {
+        const { startDate, endDate, type, month, year } = req.query;
+        
+        let query = {};
+        
+        // Filter by date range
+        if (startDate && endDate) {
+            query.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        } else if (month && year) {
+            // Filter by specific month/year
+            const start = new Date(year, month - 1, 1);
+            const end = new Date(year, month, 0);
+            query.date = {
+                $gte: start,
+                $lte: end
+            };
+        }
+        
+        // Filter by event type
+        if (type && type !== 'all') {
+            query.type = type;
+        }
+        
+        // Non-admin users only see public events
+        if (req.user.role === 'member') {
+            query.isPublic = true;
+        }
+        
+        const events = await Event.find(query)
+            .populate('createdBy', 'name email school')
+            .sort({ date: 1, time: 1 });
+        
+        res.json({
+            success: true,
+            events: events.map(event => ({
+                id: event._id,
+                title: event.title,
+                type: event.type,
+                date: event.formattedDate,
+                time: event.time,
+                location: event.location,
+                description: event.description,
+                organizer: event.organizer,
+                createdBy: event.createdBy,
+                isPublic: event.isPublic,
+                canEdit: event.canEdit(req.user.id, req.user.role),
+                createdAt: event.createdAt,
+                updatedAt: event.updatedAt
+            }))
+        });
+    } catch (error) {
+        console.error('Error fetching events:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching events'
+        });
+    }
+});
+
+// Get single event
+app.get('/api/events/:id', auth, async (req, res) => {
+    try {
+        const event = await Event.findById(req.params.id)
+            .populate('createdBy', 'name email school');
+        
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        
+        // Check if user can view this event
+        if (!event.isPublic && req.user.role === 'member' && event.createdBy._id.toString() !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied'
+            });
+        }
+        
+        res.json({
+            success: true,
+            event: {
+                id: event._id,
+                title: event.title,
+                type: event.type,
+                date: event.formattedDate,
+                time: event.time,
+                location: event.location,
+                description: event.description,
+                organizer: event.organizer,
+                createdBy: event.createdBy,
+                isPublic: event.isPublic,
+                canEdit: event.canEdit(req.user.id, req.user.role),
+                createdAt: event.createdAt,
+                updatedAt: event.updatedAt
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching event:', error);
+        if (error.kind === 'ObjectId') {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching event'
+        });
+    }
+});
+
+// Create new event
+app.post('/api/events', [
+    auth,
+    body('title').notEmpty().withMessage('Title is required'),
+    body('type').isIn(['meeting', 'webinar', 'conference', 'deadline']).withMessage('Invalid event type'),
+    body('date').isISO8601().withMessage('Valid date is required'),
+    body('time').optional().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Time must be in HH:MM format')
+], async (req, res) => {
+    try {
+        // Check permissions
+        if (req.user.role === 'member') {
+            return res.status(403).json({
+                success: false,
+                message: 'Only administrators and executives can create events'
+            });
+        }
+        
+        // Check for validation errors
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Validation failed',
+                errors: errors.array()
+            });
+        }
+        
+        const { title, type, date, time, location, description, organizer, isPublic } = req.body;
+        
+        const event = new Event({
+            title,
+            type,
+            date: new Date(date),
+            time,
+            location,
+            description,
+            organizer,
+            isPublic: isPublic !== false, // Default to true if not specified
+            createdBy: req.user.id,
+            school: req.user.school
+        });
+        
+        await event.save();
+        
+        // Populate the created event
+        await event.populate('createdBy', 'name email school');
+        
+        res.status(201).json({
+            success: true,
+            message: 'Event created successfully',
+            event: {
+                id: event._id,
+                title: event.title,
+                type: event.type,
+                date: event.formattedDate,
+                time: event.time,
+                location: event.location,
+                description: event.description,
+                organizer: event.organizer,
+                createdBy: event.createdBy,
+                isPublic: event.isPublic,
+                canEdit: true,
+                createdAt: event.createdAt,
+                updatedAt: event.updatedAt
+            }
+        });
+    } catch (error) {
+        console.error('Error creating event:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while creating event'
+        });
+    }
+});
+
+// Update event
+app.put('/api/events/:id', [
+    auth,
+    body('title').optional().notEmpty().withMessage('Title cannot be empty'),
+    body('type').optional().isIn(['meeting', 'webinar', 'conference', 'deadline']).withMessage('Invalid event type'),
+    body('date').optional().isISO8601().withMessage('Valid date is required'),
+    body('time').optional().matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Time must be in HH:MM format')
+], async (req, res) => {
+    try {
+        // Check for validation errors
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Validation failed',
+                errors: errors.array()
+            });
+        }
+        
+        const event = await Event.findById(req.params.id);
+        
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        
+        // Check permissions
+        if (!event.canEdit(req.user.id, req.user.role)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. You can only edit your own events.'
+            });
+        }
+        
+        const { title, type, date, time, location, description, organizer, isPublic } = req.body;
+        
+        // Update fields
+        if (title !== undefined) event.title = title;
+        if (type !== undefined) event.type = type;
+        if (date !== undefined) event.date = new Date(date);
+        if (time !== undefined) event.time = time;
+        if (location !== undefined) event.location = location;
+        if (description !== undefined) event.description = description;
+        if (organizer !== undefined) event.organizer = organizer;
+        if (isPublic !== undefined) event.isPublic = isPublic;
+        
+        await event.save();
+        await event.populate('createdBy', 'name email school');
+        
+        res.json({
+            success: true,
+            message: 'Event updated successfully',
+            event: {
+                id: event._id,
+                title: event.title,
+                type: event.type,
+                date: event.formattedDate,
+                time: event.time,
+                location: event.location,
+                description: event.description,
+                organizer: event.organizer,
+                createdBy: event.createdBy,
+                isPublic: event.isPublic,
+                canEdit: event.canEdit(req.user.id, req.user.role),
+                createdAt: event.createdAt,
+                updatedAt: event.updatedAt
+            }
+        });
+    } catch (error) {
+        console.error('Error updating event:', error);
+        if (error.kind === 'ObjectId') {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        res.status(500).json({
+            success: false,
+            message: 'Server error while updating event'
+        });
+    }
+});
+
+// Delete event
+app.delete('/api/events/:id', auth, async (req, res) => {
+    try {
+        const event = await Event.findById(req.params.id);
+        
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        
+        // Check permissions
+        if (!event.canEdit(req.user.id, req.user.role)) {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. You can only delete your own events.'
+            });
+        }
+        
+        await Event.findByIdAndDelete(req.params.id);
+        
+        res.json({
+            success: true,
+            message: 'Event deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting event:', error);
+        if (error.kind === 'ObjectId') {
+            return res.status(404).json({
+                success: false,
+                message: 'Event not found'
+            });
+        }
+        res.status(500).json({
+            success: false,
+            message: 'Server error while deleting event'
+        });
+    }
+});
+
+// Get event statistics
+app.get('/api/events/stats/summary', auth, async (req, res) => {
+    try {
+        if (req.user.role === 'member') {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied'
+            });
+        }
+        
+        const currentDate = new Date();
+        
+        const [totalEvents, upcomingEvents, eventsByType] = await Promise.all([
+            Event.countDocuments(),
+            Event.countDocuments({
+                date: { $gte: currentDate }
+            }),
+            Event.aggregate([
+                { $group: { _id: '$type', count: { $sum: 1 } } }
+            ])
+        ]);
+        
+        res.json({
+            success: true,
+            stats: {
+                totalEvents,
+                upcomingEvents,
+                eventsByType: eventsByType.reduce((acc, item) => {
+                    acc[item._id] = item.count;
+                    return acc;
+                }, {})
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching event stats:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching statistics'
+        });
+    }
+});
+
+// ========== HEALTH CHECK ==========
+
 app.get('/api/health', (req, res) => {
     res.json({
         success: true,
@@ -665,10 +1111,13 @@ app.get('/', (req, res) => {
             health: '/api/health',
             auth: '/api/auth/*',
             communications: '/api/communications',
-            users: '/api/users'
+            users: '/api/users',
+            events: '/api/events'
         }
     });
 });
+
+// ========== ERROR HANDLING ==========
 
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
@@ -694,13 +1143,14 @@ app.use((err, req, res, next) => {
     });
 });
 
-
 app.use('*', (req, res) => {
     res.status(404).json({
         success: false,
         message: 'Route not found'
     });
 });
+
+// ========== START SERVER ==========
 
 const startServer = async () => {
     await connectDB();
