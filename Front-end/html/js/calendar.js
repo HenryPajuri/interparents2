@@ -1,14 +1,16 @@
-// Enhanced Calendar functionality with fixed update and delete
+// Enhanced Calendar functionality with proper authentication integration
 class Calendar {
     constructor() {
         this.currentDate = new Date();
         this.currentView = 'month';
         this.events = [];
         this.selectedEventId = null;
-        this.isEditMode = false; // Track if we're editing or creating
+        this.isEditMode = false;
         this.API_BASE = 'https://interparents-1.onrender.com/api';
         this.isLoading = false;
         this.debugMode = true;
+        this.isAuthenticated = false;
+        this.currentUser = null;
         
         console.log('🗓️ Calendar initialized with API_BASE:', this.API_BASE);
         this.init();
@@ -16,7 +18,12 @@ class Calendar {
 
     async init() {
         console.log('🔄 Initializing calendar...');
+        
+        // First check authentication state
+        await this.checkAuthState();
+        
         this.bindEvents();
+        this.updateUI();
         this.showLoading(true);
         await this.loadEvents();
         this.showLoading(false);
@@ -25,7 +32,94 @@ class Calendar {
         console.log('✅ Calendar initialization complete');
     }
 
-    // Enhanced API call method with better error handling
+    // NEW: Check authentication state
+    async checkAuthState() {
+        try {
+            const response = await fetch(`${this.API_BASE}/auth/me`, {
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    this.isAuthenticated = true;
+                    this.currentUser = data.user;
+                    console.log('✅ User authenticated:', this.currentUser.name);
+                } else {
+                    this.isAuthenticated = false;
+                    this.currentUser = null;
+                }
+            } else {
+                this.isAuthenticated = false;
+                this.currentUser = null;
+            }
+        } catch (error) {
+            console.log('ℹ️ User not authenticated');
+            this.isAuthenticated = false;
+            this.currentUser = null;
+        }
+    }
+
+    // NEW: Update UI based on authentication state
+    updateUI() {
+        const addEventBtn = document.getElementById('addEventBtn');
+        const authNotice = document.getElementById('authNotice');
+        
+        if (this.isAuthenticated) {
+            // User is logged in
+            if (addEventBtn) addEventBtn.style.display = 'block';
+            if (authNotice) authNotice.style.display = 'none';
+            
+            // Update navigation if AuthStateManager hasn't loaded yet
+            this.updateNavigation();
+        } else {
+            // User is not logged in
+            if (addEventBtn) addEventBtn.style.display = 'none';
+            if (authNotice) authNotice.style.display = 'block';
+        }
+    }
+
+    // NEW: Update navigation to show proper login/logout state
+    updateNavigation() {
+        const loginNavItem = document.querySelector('.login-nav-item');
+        if (!loginNavItem || !this.currentUser) return;
+
+        // Only update if it's still showing login button
+        const loginButton = loginNavItem.querySelector('a[href="login.html"]');
+        if (loginButton) {
+            loginNavItem.innerHTML = `
+                <a href="dashboard.html" style="margin-right: 1rem; color: white; text-decoration: none;">Dashboard</a>
+                <a href="#" class="login-button-nav" id="logoutBtn">Logout</a>
+            `;
+
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.logout();
+                });
+            }
+        }
+    }
+
+    // NEW: Logout functionality
+    async logout() {
+        try {
+            await fetch(`${this.API_BASE}/auth/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            sessionStorage.clear();
+            this.isAuthenticated = false;
+            this.currentUser = null;
+            window.location.href = 'login.html';
+        }
+    }
+
+    // UPDATED: Enhanced API call method with optional authentication
     async apiCall(endpoint, options = {}) {
         const url = `${this.API_BASE}${endpoint}`;
         console.log(`🌐 API Call: ${options.method || 'GET'} ${url}`);
@@ -40,14 +134,7 @@ class Calendar {
         const mergedOptions = { ...defaultOptions, ...options };
 
         try {
-            console.log('📤 Request options:', {
-                method: mergedOptions.method || 'GET',
-                headers: mergedOptions.headers,
-                body: mergedOptions.body ? 'Present' : 'None'
-            });
-            
             const response = await fetch(url, mergedOptions);
-            
             console.log(`📥 Response: ${response.status} ${response.statusText}`);
             
             if (!response.ok) {
@@ -59,13 +146,16 @@ class Calendar {
                     errorMessage = errorData.message || errorMessage;
                 } catch (parseError) {
                     console.error('❌ Could not parse error response as JSON');
-                    const errorText = await response.text();
-                    console.error('❌ Error response text:', errorText);
                 }
                 
-                if (response.status === 401) {
-                    console.warn('🔒 Authentication failed - redirecting to login');
-                    this.redirectToLogin();
+                // For events endpoint, if user is not authenticated, that's OK for viewing
+                if (response.status === 401 && endpoint.includes('/events') && options.method !== 'POST' && options.method !== 'PUT' && options.method !== 'DELETE') {
+                    console.log('ℹ️ Loading events without authentication');
+                    return { success: false, needsAuth: true };
+                }
+                
+                if (response.status === 401 && (options.method === 'POST' || options.method === 'PUT' || options.method === 'DELETE')) {
+                    this.showMessage('Please log in to perform this action', 'error');
                     return null;
                 }
                 
@@ -82,7 +172,7 @@ class Calendar {
         }
     }
 
-    // Enhanced event loading
+    // UPDATED: Enhanced event loading that works without authentication
     async loadEvents() {
         try {
             console.log('📅 Loading events...');
@@ -96,51 +186,225 @@ class Calendar {
             if (data && data.success) {
                 this.events = data.events || [];
                 console.log(`✅ Loaded ${this.events.length} events from backend`);
-                
-                if (this.debugMode && this.events.length > 0) {
-                    console.log('📅 Sample event:', this.events[0]);
-                }
+            } else if (data && data.needsAuth) {
+                // Load public events without authentication
+                console.log('📅 Loading sample/public events for non-authenticated user');
+                this.events = this.loadSampleEvents();
             } else {
                 throw new Error(data?.message || 'Failed to load events - invalid response format');
             }
             
         } catch (error) {
             console.error('❌ Error loading events from backend:', error);
-            this.showMessage(`Failed to load events: ${error.message}`, 'error');
             console.log('🔄 Loading sample events as fallback');
             this.events = this.loadSampleEvents();
         }
     }
 
-    // Load sample events as fallback
-    loadSampleEvents() {
-        console.log('📅 Loading sample events as fallback');
-        return [
-            {
-                id: 'sample-1',
-                title: 'INTERPARENTS Bureau Meeting',
-                type: 'meeting',
-                date: '2025-01-15',
-                time: '14:00',
-                location: 'Brussels, Belgium',
-                description: 'Weekly Bureau meeting to discuss ongoing initiatives.',
-                organizer: 'INTERPARENTS Bureau',
-                canEdit: false
-            },
-            {
-                id: 'sample-2',
-                title: 'Joint Teaching Committee Meeting',
-                type: 'meeting',
-                date: '2025-02-12',
-                time: '09:00',
-                location: 'Brussels, Belgium',
-                description: 'JTC meeting with inspectors from all Member States.',
-                organizer: 'European Schools Office',
-                canEdit: false
+    // UPDATED: Show event creator information
+    createDayElement(date, currentMonth) {
+        const day = document.createElement('div');
+        day.className = 'calendar-day';
+        
+        const today = new Date();
+        const isToday = date.toDateString() === today.toDateString();
+        const isCurrentMonth = date.getMonth() === currentMonth;
+        
+        if (isToday) day.classList.add('today');
+        if (!isCurrentMonth) day.classList.add('other-month');
+
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'day-number';
+        dayNumber.textContent = date.getDate();
+        day.appendChild(dayNumber);
+
+        const dayEvents = this.getEventsForDate(date);
+        dayEvents.forEach(event => {
+            const eventElement = document.createElement('div');
+            eventElement.className = `event-item ${event.type}`;
+            eventElement.textContent = event.title;
+            
+            // Add creator info if available
+            if (event.createdBy && event.createdBy.name) {
+                eventElement.title = `${event.title}\nOrganizer: ${event.organizer || event.createdBy.name}`;
             }
-        ];
+            
+            eventElement.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showEventDetails(event);
+            });
+            day.appendChild(eventElement);
+        });
+
+        // Only allow creating events if authenticated
+        if (this.isAuthenticated) {
+            day.addEventListener('click', () => {
+                this.openEventModal(date);
+            });
+        }
+
+        return day;
     }
 
+    // UPDATED: Enhanced event details with creator info
+    showEventDetails(event) {
+        console.log('👁️ Showing event details for:', event.title, 'ID:', event.id);
+        
+        const modal = document.getElementById('eventDetailsModal');
+        const content = document.getElementById('eventDetailsContent');
+        
+        document.getElementById('eventDetailsTitle').textContent = event.title;
+        
+        const eventDate = new Date(event.date);
+        const dateStr = eventDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        let creatorInfo = '';
+        if (event.createdBy && event.createdBy.name) {
+            creatorInfo = `
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Created by</div>
+                    <div class="event-detail-value">${event.createdBy.name} (${event.createdBy.school || 'Unknown School'})</div>
+                </div>
+            `;
+        }
+
+        content.innerHTML = `
+            <div class="event-detail-item">
+                <div class="event-detail-label">Date & Time</div>
+                <div class="event-detail-value">${dateStr} ${event.time ? `at ${event.time}` : ''}</div>
+            </div>
+            <div class="event-detail-item">
+                <div class="event-detail-label">Type</div>
+                <div class="event-detail-value">${this.capitalizeFirst(event.type)}</div>
+            </div>
+            ${event.location ? `
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Location</div>
+                    <div class="event-detail-value">${event.location}</div>
+                </div>
+            ` : ''}
+            ${event.organizer ? `
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Organizer</div>
+                    <div class="event-detail-value">${event.organizer}</div>
+                </div>
+            ` : ''}
+            ${creatorInfo}
+            ${event.description ? `
+                <div class="event-detail-item">
+                    <div class="event-detail-label">Description</div>
+                    <div class="event-detail-value">${event.description}</div>
+                </div>
+            ` : ''}
+        `;
+
+        // Store the selected event ID for editing
+        this.selectedEventId = event.id;
+        
+        // Show/hide edit button based on permissions and authentication
+        const editBtn = document.getElementById('editEventBtn');
+        if (this.isAuthenticated && event.canEdit !== false) {
+            editBtn.style.display = 'inline-block';
+        } else {
+            editBtn.style.display = 'none';
+        }
+        
+        console.log('👁️ Event details modal opened, selectedEventId set to:', this.selectedEventId);
+        
+        modal.classList.add('show');
+    }
+
+    // UPDATED: Only allow opening event modal if authenticated
+    openEventModal(date = null) {
+        if (!this.isAuthenticated) {
+            this.showMessage('Please log in to create events', 'error');
+            return;
+        }
+        
+        console.log('🎯 Opening event modal for new event');
+        
+        const modal = document.getElementById('eventModal');
+        const form = document.getElementById('eventForm');
+        
+        // Reset all state
+        form.reset();
+        this.selectedEventId = null;
+        this.isEditMode = false;
+        
+        // Set date if provided
+        if (date) {
+            document.getElementById('eventDate').value = date.toISOString().split('T')[0];
+        }
+        
+        // Update modal for new event
+        document.getElementById('modalTitle').textContent = 'Add Event';
+        document.getElementById('deleteEventBtn').style.display = 'none';
+        document.getElementById('saveEventBtn').textContent = 'Save Event';
+        
+        modal.classList.add('show');
+    }
+
+    // UPDATED: Enhanced agenda rendering with creator info
+    renderAgenda() {
+        document.getElementById('monthView').style.display = 'none';
+        document.getElementById('weekView').style.display = 'none';
+        document.getElementById('agendaView').style.display = 'block';
+
+        const agendaList = document.getElementById('agendaList');
+        const filter = document.getElementById('agendaFilter').value;
+        
+        let filteredEvents = this.events;
+        if (filter !== 'all') {
+            filteredEvents = this.events.filter(event => event.type === filter);
+        }
+
+        filteredEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        agendaList.innerHTML = '';
+
+        if (filteredEvents.length === 0) {
+            agendaList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 2rem;">No events found.</p>';
+            return;
+        }
+
+        filteredEvents.forEach(event => {
+            const agendaItem = document.createElement('div');
+            agendaItem.className = `agenda-item ${event.type}`;
+            
+            const eventDate = new Date(event.date);
+            const dateStr = eventDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            let creatorInfo = '';
+            if (event.createdBy && event.createdBy.name) {
+                creatorInfo = `👤 ${event.createdBy.name}`;
+            }
+
+            agendaItem.innerHTML = `
+                <div class="agenda-date">${dateStr} ${event.time ? `at ${event.time}` : ''}</div>
+                <div class="agenda-title">${event.title}</div>
+                <div class="agenda-details">
+                    ${event.location ? `📍 ${event.location}` : ''}
+                    ${event.organizer ? `👥 ${event.organizer}` : ''}
+                    ${creatorInfo ? `<br>${creatorInfo}` : ''}
+                </div>
+            `;
+
+            agendaItem.addEventListener('click', () => this.showEventDetails(event));
+            agendaList.appendChild(agendaItem);
+        });
+    }
+
+    // Rest of the methods remain the same...
     bindEvents() {
         // Navigation buttons
         document.getElementById('prevBtn').addEventListener('click', () => this.navigatePrev());
@@ -240,42 +504,8 @@ class Calendar {
         }
     }
 
-    createDayElement(date, currentMonth) {
-        const day = document.createElement('div');
-        day.className = 'calendar-day';
-        
-        const today = new Date();
-        const isToday = date.toDateString() === today.toDateString();
-        const isCurrentMonth = date.getMonth() === currentMonth;
-        
-        if (isToday) day.classList.add('today');
-        if (!isCurrentMonth) day.classList.add('other-month');
-
-        const dayNumber = document.createElement('div');
-        dayNumber.className = 'day-number';
-        dayNumber.textContent = date.getDate();
-        day.appendChild(dayNumber);
-
-        const dayEvents = this.getEventsForDate(date);
-        dayEvents.forEach(event => {
-            const eventElement = document.createElement('div');
-            eventElement.className = `event-item ${event.type}`;
-            eventElement.textContent = event.title;
-            eventElement.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.showEventDetails(event);
-            });
-            day.appendChild(eventElement);
-        });
-
-        day.addEventListener('click', () => {
-            this.openEventModal(date);
-        });
-
-        return day;
-    }
-
     renderWeek() {
+        // Implementation remains the same...
         document.getElementById('monthView').style.display = 'none';
         document.getElementById('weekView').style.display = 'block';
         document.getElementById('agendaView').style.display = 'none';
@@ -356,54 +586,6 @@ class Calendar {
         weekGrid.appendChild(eventsGrid);
     }
 
-    renderAgenda() {
-        document.getElementById('monthView').style.display = 'none';
-        document.getElementById('weekView').style.display = 'none';
-        document.getElementById('agendaView').style.display = 'block';
-
-        const agendaList = document.getElementById('agendaList');
-        const filter = document.getElementById('agendaFilter').value;
-        
-        let filteredEvents = this.events;
-        if (filter !== 'all') {
-            filteredEvents = this.events.filter(event => event.type === filter);
-        }
-
-        filteredEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-        agendaList.innerHTML = '';
-
-        if (filteredEvents.length === 0) {
-            agendaList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 2rem;">No events found.</p>';
-            return;
-        }
-
-        filteredEvents.forEach(event => {
-            const agendaItem = document.createElement('div');
-            agendaItem.className = `agenda-item ${event.type}`;
-            
-            const eventDate = new Date(event.date);
-            const dateStr = eventDate.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-
-            agendaItem.innerHTML = `
-                <div class="agenda-date">${dateStr} ${event.time ? `at ${event.time}` : ''}</div>
-                <div class="agenda-title">${event.title}</div>
-                <div class="agenda-details">
-                    ${event.location ? `📍 ${event.location}` : ''}
-                    ${event.organizer ? `👥 ${event.organizer}` : ''}
-                </div>
-            `;
-
-            agendaItem.addEventListener('click', () => this.showEventDetails(event));
-            agendaList.appendChild(agendaItem);
-        });
-    }
-
     getEventsForDate(date) {
         const dateStr = date.toISOString().split('T')[0];
         return this.events.filter(event => event.date === dateStr);
@@ -433,98 +615,14 @@ class Calendar {
         return days[dayIndex];
     }
 
-    // FIXED: Reset modal state properly
-    openEventModal(date = null) {
-        console.log('🎯 Opening event modal for new event');
-        
-        const modal = document.getElementById('eventModal');
-        const form = document.getElementById('eventForm');
-        
-        // IMPORTANT: Reset all state
-        form.reset();
-        this.selectedEventId = null;
-        this.isEditMode = false;
-        
-        // Set date if provided
-        if (date) {
-            document.getElementById('eventDate').value = date.toISOString().split('T')[0];
-        }
-        
-        // Update modal for new event
-        document.getElementById('modalTitle').textContent = 'Add Event';
-        document.getElementById('deleteEventBtn').style.display = 'none';
-        document.getElementById('saveEventBtn').textContent = 'Save Event';
-        
-        console.log('🎯 Modal state: selectedEventId =', this.selectedEventId, 'isEditMode =', this.isEditMode);
-        
-        modal.classList.add('show');
-    }
-
-    showEventDetails(event) {
-        console.log('👁️ Showing event details for:', event.title, 'ID:', event.id);
-        
-        const modal = document.getElementById('eventDetailsModal');
-        const content = document.getElementById('eventDetailsContent');
-        
-        document.getElementById('eventDetailsTitle').textContent = event.title;
-        
-        const eventDate = new Date(event.date);
-        const dateStr = eventDate.toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-
-        content.innerHTML = `
-            <div class="event-detail-item">
-                <div class="event-detail-label">Date & Time</div>
-                <div class="event-detail-value">${dateStr} ${event.time ? `at ${event.time}` : ''}</div>
-            </div>
-            <div class="event-detail-item">
-                <div class="event-detail-label">Type</div>
-                <div class="event-detail-value">${this.capitalizeFirst(event.type)}</div>
-            </div>
-            ${event.location ? `
-                <div class="event-detail-item">
-                    <div class="event-detail-label">Location</div>
-                    <div class="event-detail-value">${event.location}</div>
-                </div>
-            ` : ''}
-            ${event.organizer ? `
-                <div class="event-detail-item">
-                    <div class="event-detail-label">Organizer</div>
-                    <div class="event-detail-value">${event.organizer}</div>
-                </div>
-            ` : ''}
-            ${event.description ? `
-                <div class="event-detail-item">
-                    <div class="event-detail-label">Description</div>
-                    <div class="event-detail-value">${event.description}</div>
-                </div>
-            ` : ''}
-        `;
-
-        // Store the selected event ID for editing
-        this.selectedEventId = event.id;
-        
-        // Show/hide edit button based on permissions
-        const editBtn = document.getElementById('editEventBtn');
-        if (event.canEdit !== false) {
-            editBtn.style.display = 'inline-block';
-        } else {
-            editBtn.style.display = 'none';
-        }
-        
-        console.log('👁️ Event details modal opened, selectedEventId set to:', this.selectedEventId);
-        
-        modal.classList.add('show');
-    }
-
-    // FIXED: Properly set edit mode and populate form
     editCurrentEvent() {
         if (!this.selectedEventId) {
             console.error('❌ No event selected for editing');
+            return;
+        }
+        
+        if (!this.isAuthenticated) {
+            this.showMessage('Please log in to edit events', 'error');
             return;
         }
         
@@ -548,9 +646,7 @@ class Calendar {
         // Open edit modal with proper state
         const modal = document.getElementById('eventModal');
         
-        // IMPORTANT: Set edit mode BEFORE populating form
         this.isEditMode = true;
-        // selectedEventId is already set from showEventDetails
         
         // Populate form with event data
         document.getElementById('eventTitle').value = event.title || '';
@@ -573,14 +669,16 @@ class Calendar {
             this.deleteEvent();
         };
         
-        console.log('✏️ Edit modal state: selectedEventId =', this.selectedEventId, 'isEditMode =', this.isEditMode);
-        
         modal.classList.add('show');
     }
 
-    // FIXED: Properly handle create vs update
     async saveEvent(e) {
         e.preventDefault();
+        
+        if (!this.isAuthenticated) {
+            this.showMessage('Please log in to save events', 'error');
+            return;
+        }
         
         if (this.isLoading) {
             console.log('⏳ Already saving, ignoring duplicate request');
@@ -600,7 +698,6 @@ class Calendar {
 
         console.log('💾 Saving event...');
         console.log('💾 Event data:', eventData);
-        console.log('💾 Current state: selectedEventId =', this.selectedEventId, 'isEditMode =', this.isEditMode);
 
         this.setModalLoadingState(true);
 
@@ -643,10 +740,14 @@ class Calendar {
         }
     }
 
-    // FIXED: Proper delete functionality
     async deleteEvent() {
         if (!this.selectedEventId) {
             console.error('❌ No event selected for deletion');
+            return;
+        }
+        
+        if (!this.isAuthenticated) {
+            this.showMessage('Please log in to delete events', 'error');
             return;
         }
         
@@ -657,7 +758,6 @@ class Calendar {
             return;
         }
 
-        console.log(`🗑️ Confirmed deletion of event: ${this.selectedEventId}`);
         this.setModalLoadingState(true);
 
         try {
@@ -760,7 +860,6 @@ class Calendar {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
-    // FIXED: Properly reset modal state
     closeEventModal() {
         console.log('🚪 Closing event modal and resetting state');
         document.getElementById('eventModal').classList.remove('show');
@@ -768,19 +867,42 @@ class Calendar {
         // Reset all state
         this.selectedEventId = null;
         this.isEditMode = false;
-        
-        console.log('🚪 Modal state reset: selectedEventId =', this.selectedEventId, 'isEditMode =', this.isEditMode);
     }
 
     closeEventDetailsModal() {
         console.log('🚪 Closing event details modal');
         document.getElementById('eventDetailsModal').classList.remove('show');
-        // Note: Don't reset selectedEventId here as it might be needed for editing
     }
 
-    redirectToLogin() {
-        sessionStorage.clear();
-        window.location.href = 'login.html';
+    // Load sample events as fallback for non-authenticated users
+    loadSampleEvents() {
+        console.log('📅 Loading sample events as fallback');
+        return [
+            {
+                id: 'sample-1',
+                title: 'INTERPARENTS Bureau Meeting',
+                type: 'meeting',
+                date: '2025-01-15',
+                time: '14:00',
+                location: 'Brussels, Belgium',
+                description: 'Weekly Bureau meeting to discuss ongoing initiatives.',
+                organizer: 'INTERPARENTS Bureau',
+                createdBy: { name: 'INTERPARENTS Admin', school: 'INTERPARENTS Central' },
+                canEdit: false
+            },
+            {
+                id: 'sample-2',
+                title: 'Joint Teaching Committee Meeting',
+                type: 'meeting',
+                date: '2025-02-12',
+                time: '09:00',
+                location: 'Brussels, Belgium',
+                description: 'JTC meeting with inspectors from all Member States.',
+                organizer: 'European Schools Office',
+                createdBy: { name: 'European Schools', school: 'Office of Secretary General' },
+                canEdit: false
+            }
+        ];
     }
 }
 

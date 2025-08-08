@@ -205,36 +205,111 @@ const verifyToken = (token) => {
 };
 
 // Authentication middleware
-const auth = async (req, res, next) => {
+const optionalAuth = async (req, res, next) => {
     try {
         const token = req.cookies.token || req.header('Authorization')?.replace('Bearer ', '');
         
         if (!token) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Access denied. No token provided.' 
-            });
+            // No token provided - continue as non-authenticated user
+            req.user = null;
+            return next();
         }
 
         const decoded = verifyToken(token);
         const user = await User.findById(decoded.userId).select('-password');
         
         if (!user || !user.isActive) {
-            return res.status(401).json({ 
-                success: false, 
-                message: 'Invalid token or user not active.' 
-            });
+            // Invalid token - continue as non-authenticated user
+            req.user = null;
+            return next();
         }
 
         req.user = user;
         next();
     } catch (error) {
-        res.status(401).json({ 
-            success: false, 
-            message: 'Invalid token.' 
-        });
+        // Token verification failed - continue as non-authenticated user
+        req.user = null;
+        next();
     }
 };
+
+// UPDATED: GET /api/events - Now accessible without authentication for public events
+app.get('/api/events', optionalAuth, async (req, res) => {
+    try {
+        const userRole = req.user ? req.user.role : 'guest';
+        const userEmail = req.user ? req.user.email : 'anonymous';
+        
+        console.log(`📅 GET /api/events called by: ${userEmail} (${userRole})`);
+        
+        const { startDate, endDate, type, month, year } = req.query;
+        let query = {};
+        
+        // Filter by date range
+        if (startDate && endDate) {
+            query.date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        } else if (month && year) {
+            const start = new Date(year, month - 1, 1);
+            const end = new Date(year, month, 0);
+            query.date = {
+                $gte: start,
+                $lte: end
+            };
+        }
+        
+        // Filter by event type
+        if (type && type !== 'all') {
+            query.type = type;
+        }
+        
+        // Non-authenticated users and members only see public events
+        if (!req.user || req.user.role === 'member') {
+            query.isPublic = true;
+        }
+        
+        console.log('Query filters:', query);
+        console.log('User authenticated:', !!req.user);
+        
+        const events = await Event.find(query)
+            .populate('createdBy', 'name email school')
+            .sort({ date: 1, time: 1 });
+        
+        console.log(`Found ${events.length} events`);
+        
+        res.json({
+            success: true,
+            events: events.map(event => ({
+                id: event._id,
+                title: event.title,
+                type: event.type,
+                date: event.formattedDate || event.date.toISOString().split('T')[0],
+                time: event.time,
+                location: event.location,
+                description: event.description,
+                organizer: event.organizer,
+                createdBy: event.createdBy ? {
+                    name: event.createdBy.name,
+                    school: event.createdBy.school,
+                    // Don't expose email for privacy
+                    id: event.createdBy._id
+                } : null,
+                isPublic: event.isPublic,
+                canEdit: req.user ? (event.canEdit ? event.canEdit(req.user.id, req.user.role) : true) : false,
+                createdAt: event.createdAt,
+                updatedAt: event.updatedAt
+            }))
+        });
+    } catch (error) {
+        console.error('Error fetching events:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching events',
+            error: error.message
+        });
+    }
+});
 
 const adminAuth = (req, res, next) => {
     if (req.user.role !== 'admin' && req.user.role !== 'executive') {
