@@ -29,29 +29,66 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false
 }));
 
-// Rate limiting
+// Replace the CORS and rate limiting section in your server.js with this:
+
+// Rate limiting - UPDATED to be less aggressive
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100,
-    message: 'Too many requests from this IP, please try again later.'
+    max: 300, // Increased from 100 to 300 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Don't count successful requests against the limit for some endpoints
+    skipSuccessfulRequests: false,
+    // Add more specific error response
+    handler: (req, res) => {
+        res.status(429).json({
+            success: false,
+            message: 'Too many requests from this IP, please try again later.',
+            retryAfter: Math.round(15 * 60) // 15 minutes in seconds
+        });
+    }
 });
-
+// Rate limiting
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 5, // limit each IP to 5 login requests per windowMs
+    max: 15, // Increased from 5 to 15 login attempts per windowMs
     message: 'Too many login attempts, please try again later.',
-    skipSuccessfulRequests: true
+    skipSuccessfulRequests: true, // Don't count successful logins
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+        res.status(429).json({
+            success: false,
+            message: 'Too many login attempts from this IP, please try again later.',
+            retryAfter: Math.round(15 * 60)
+        });
+    }
 });
 
+// Apply general rate limiting to all requests
 app.use(limiter);
 app.use(express.json());
 app.use(cookieParser());
 
+// CORS configuration - UPDATED to fix the issue
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'https://interparentsfrontend.onrender.com',
-    credentials: true
+    origin: [
+        'https://interparentsfrontend.onrender.com',
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:8080'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie'],
+    optionsSuccessStatus: 200 // For legacy browser support
 }));
 
+// Add preflight handling for all routes
+app.options('*', cors());
 // Serve PDF files statically
 app.use('/pdf', express.static(path.join(__dirname, 'pdf'), {
     setHeaders: (res, filePath) => {
