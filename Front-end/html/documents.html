@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documents & Webinars - INTERPARENTS</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/documents.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="index.html" style="color: inherit; text-decoration: none;">INTERPARENTS</a>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="index.html#home">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li class="dropdown">
+                            <a href="index.html#members" class="dropdown-toggle">Members</a>
+                            <ul class="dropdown-menu">
+                                <li><a href="index.html#members">Parent Association Member Schools</a></li>
+                                <li><a href="members.html">Key Members of the Association</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="index.html#communications">Communications</a></li>
+                        <li><a href="documents.html" style="color: #f39c12; font-weight: 600;">Documents</a></li>
+                        <li><a href="calendar.html">Calendar</a></li>
+                        <li><a href="index.html#contact">Contact</a></li>
+                        <li><a href="documents.html">Documents</a></li>
+                        <li class="login-nav-item">
+                            <a href="login.html" class="login-button-nav">Login</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="page-hero">
+        <div class="container">
+            <h1>Documents & Webinars</h1>
+            <p class="subtitle">Access our comprehensive collection of policy documents, guidelines, training materials, and educational webinars to stay informed about European Schools initiatives and best practices.</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="main-content">
+            <!-- Quick Actions and Search -->
+            <div class="documents-actions" id="documentsActions">
+                <div class="search-filters">
+                    <input type="text" id="globalSearch" class="global-search" placeholder="Search documents and webinars...">
+                    <select id="categoryFilter" class="category-filter">
+                        <option value="all">All Categories</option>
+                        <option value="policy">Policy Documents</option>
+                        <option value="guidelines">Guidelines</option>
+                        <option value="reports">Reports</option>
+                        <option value="training">Training Materials</option>
+                        <option value="webinar">Webinars</option>
+                        <option value="presentation">Presentations</option>
+                    </select>
+                </div>
+                <div class="view-controls">
+                    <button class="view-btn active" data-view="grid">📋 Grid View</button>
+                    <button class="view-btn" data-view="list">📄 List View</button>
+                </div>
+            </div>
+
+            <!-- Login prompt for upload functionality -->
+            <div class="admin-notice" id="adminNotice" style="display: none;">
+                <div class="notice-content">
+                    <div style="font-size: 1.1rem; margin-bottom: 0.5rem;">📁 Document Management</div>
+                    <p>You have administrative access to upload and manage documents and webinars.</p>
+                    <button class="admin-action-btn" id="uploadDocumentBtn">📤 Upload Document</button>
+                    <button class="admin-action-btn" id="uploadWebinarBtn">🎥 Add Webinar</button>
+                </div>
+            </div>
+
+            <!-- Documents Repository Section -->
+            <section class="repository-section" id="documentsRepository">
+                <div class="section-header">
+                    <h2>📋 Documents Repository</h2>
+                    <p>Essential documents, policies, and guidelines for INTERPARENTS members and European Schools stakeholders.</p>
+                </div>
+
+                <div class="documents-grid" id="documentsGrid">
+                    <!-- Sample documents - these would be loaded dynamically -->
+                    <div class="document-card" data-category="policy">
+                        <div class="document-icon">📜</div>
+                        <div class="document-info">
+                            <h3>INTERPARENTS Statutes 2024</h3>
+                            <p class="document-category">Policy Document</p>
+                            <p class="document-description">Updated organizational statutes and governance framework for INTERPARENTS operations.</p>
+                            <div class="document-meta">
+                                <span class="document-date">📅 Updated: March 2024</span>
+                                <span class="document-size">📊 2.3 MB</span>
+                            </div>
+                            <div class="document-actions">
+                                <a href="#" class="action-btn primary">📖 View</a>
+                                <a href="#" class="action-btn secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="document-card" data-category="guidelines">
+                        <div class="document-icon">📋</div>
+                        <div class="document-info">
+                            <h3>Parent Representative Guidelines</h3>
+                            <p class="document-category">Guidelines</p>
+                            <p class="document-description">Comprehensive guide for parent representatives in European Schools governance.</p>
+                            <div class="document-meta">
+                                <span class="document-date">📅 Updated: January 2024</span>
+                                <span class="document-size">📊 1.8 MB</span>
+                            </div>
+                            <div class="document-actions">
+                                <a href="#" class="action-btn primary">📖 View</a>
+                                <a href="#" class="action-btn secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="document-card" data-category="training">
+                        <div class="document-icon">🎓</div>
+                        <div class="document-info">
+                            <h3>Committee Participation Handbook</h3>
+                            <p class="document-category">Training Materials</p>
+                            <p class="document-description">Training materials for effective participation in JTC and BOG committees.</p>
+                            <div class="document-meta">
+                                <span class="document-date">📅 Updated: February 2024</span>
+                                <span class="document-size">📊 3.1 MB</span>
+                            </div>
+                            <div class="document-actions">
+                                <a href="#" class="action-btn primary">📖 View</a>
+                                <a href="#" class="action-btn secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="document-card" data-category="reports">
+                        <div class="document-icon">📊</div>
+                        <div class="document-info">
+                            <h3>Annual Activity Report 2023</h3>
+                            <p class="document-category">Annual Report</p>
+                            <p class="document-description">Comprehensive overview of INTERPARENTS activities and achievements in 2023.</p>
+                            <div class="document-meta">
+                                <span class="document-date">📅 Published: December 2023</span>
+                                <span class="document-size">📊 4.2 MB</span>
+                            </div>
+                            <div class="document-actions">
+                                <a href="#" class="action-btn primary">📖 View</a>
+                                <a href="#" class="action-btn secondary">⬇️ Download</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Webinars Repository Section -->
+            <section class="repository-section" id="webinarsRepository">
+                <div class="section-header">
+                    <h2>🎥 Webinars Repository</h2>
+                    <p>Educational webinars, training sessions, and recorded presentations for European Schools community.</p>
+                </div>
+
+                <div class="webinars-grid" id="webinarsGrid">
+                    <!-- Sample webinars - these would be loaded dynamically -->
+                    <div class="webinar-card" data-category="webinar">
+                        <div class="webinar-thumbnail">
+                            <div class="thumbnail-placeholder">
+                                <div class="play-icon">▶️</div>
+                                <span class="duration">45:30</span>
+                            </div>
+                        </div>
+                        <div class="webinar-info">
+                            <h3>Understanding European Schools Curriculum</h3>
+                            <p class="webinar-category">Educational Webinar</p>
+                            <p class="webinar-description">Comprehensive overview of the European Schools curriculum structure and assessment methods.</p>
+                            <div class="webinar-meta">
+                                <span class="webinar-date">📅 Recorded: March 15, 2024</span>
+                                <span class="webinar-views">👥 348 views</span>
+                            </div>
+                            <div class="webinar-actions">
+                                <a href="#" class="action-btn primary">▶️ Watch</a>
+                                <a href="#" class="action-btn secondary">📝 Transcript</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="webinar-card" data-category="webinar">
+                        <div class="webinar-thumbnail">
+                            <div class="thumbnail-placeholder">
+                                <div class="play-icon">▶️</div>
+                                <span class="duration">32:15</span>
+                            </div>
+                        </div>
+                        <div class="webinar-info">
+                            <h3>Effective Parent Representation</h3>
+                            <p class="webinar-category">Training Session</p>
+                            <p class="webinar-description">Training session on effective advocacy and representation techniques for parent associations.</p>
+                            <div class="webinar-meta">
+                                <span class="webinar-date">📅 Recorded: February 28, 2024</span>
+                                <span class="webinar-views">👥 267 views</span>
+                            </div>
+                            <div class="webinar-actions">
+                                <a href="#" class="action-btn primary">▶️ Watch</a>
+                                <a href="#" class="action-btn secondary">📝 Transcript</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="webinar-card" data-category="presentation">
+                        <div class="webinar-thumbnail">
+                            <div class="thumbnail-placeholder">
+                                <div class="play-icon">▶️</div>
+                                <span class="duration">28:45</span>
+                            </div>
+                        </div>
+                        <div class="webinar-info">
+                            <h3>Digital Learning Initiatives 2024</h3>
+                            <p class="webinar-category">Policy Presentation</p>
+                            <p class="webinar-description">Presentation on new digital learning policies and technology integration across European Schools.</p>
+                            <div class="webinar-meta">
+                                <span class="webinar-date">📅 Recorded: January 20, 2024</span>
+                                <span class="webinar-views">👥 412 views</span>
+                            </div>
+                            <div class="webinar-actions">
+                                <a href="#" class="action-btn primary">▶️ Watch</a>
+                                <a href="#" class="action-btn secondary">📝 Transcript</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="webinar-card" data-category="webinar">
+                        <div class="webinar-thumbnail">
+                            <div class="thumbnail-placeholder">
+                                <div class="play-icon">▶️</div>
+                                <span class="duration">52:10</span>
+                            </div>
+                        </div>
+                        <div class="webinar-info">
+                            <h3>Student Well-being and Support Systems</h3>
+                            <p class="webinar-category">Educational Webinar</p>
+                            <p class="webinar-description">Discussion on mental health support, counseling services, and well-being initiatives in European Schools.</p>
+                            <div class="webinar-meta">
+                                <span class="webinar-date">📅 Recorded: December 12, 2023</span>
+                                <span class="webinar-views">👥 589 views</span>
+                            </div>
+                            <div class="webinar-actions">
+                                <a href="#" class="action-btn primary">▶️ Watch</a>
+                                <a href="#" class="action-btn secondary">📝 Transcript</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Access Section -->
+            <section class="quick-access-section">
+                <h2>🚀 Quick Access</h2>
+                <div class="quick-access-grid">
+                    <div class="quick-access-card">
+                        <div class="access-icon">📋</div>
+                        <h3>Meeting Minutes Archive</h3>
+                        <p>Access historical meeting minutes from JTC and BOG sessions.</p>
+                        <a href="#" class="access-link">Browse Archive →</a>
+                    </div>
+                    <div class="quick-access-card">
+                        <div class="access-icon">📚</div>
+                        <h3>Policy Library</h3>
+                        <p>Comprehensive collection of European Schools policies and regulations.</p>
+                        <a href="#" class="access-link">Explore Policies →</a>
+                    </div>
+                    <div class="quick-access-card">
+                        <div class="access-icon">🎓</div>
+                        <h3>Training Resources</h3>
+                        <p>Educational materials and training guides for parent representatives.</p>
+                        <a href="#" class="access-link">Access Training →</a>
+                    </div>
+                    <div class="quick-access-card">
+                        <div class="access-icon">📊</div>
+                        <h3>Statistics & Reports</h3>
+                        <p>Data analysis, statistics, and annual reports on European Schools performance.</p>
+                        <a href="#" class="access-link">View Reports →</a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Upload Document Modal -->
+    <div id="uploadModal" class="modal-overlay">
+        <div class="modal">
+            <h3 id="modalTitle">Upload Document</h3>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="documentTitle">Title *</label>
+                        <input type="text" id="documentTitle" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="documentCategory">Category *</label>
+                        <select id="documentCategory" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="policy">Policy Document</option>
+                            <option value="guidelines">Guidelines</option>
+                            <option value="reports">Reports</option>
+                            <option value="training">Training Materials</option>
+                            <option value="presentation">Presentations</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="documentDescription">Description *</label>
+                    <textarea id="documentDescription" name="description" required placeholder="Brief description of the document..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="documentDate">Publication Date</label>
+                        <input type="date" id="documentDate" name="publishDate">
+                    </div>
+                    <div class="form-group">
+                        <label>File *</label>
+                        <label for="documentFile" class="file-input">
+                            <input type="file" id="documentFile" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx" required>
+                            Choose File
+                        </label>
+                        <div id="fileStatus" class="file-status" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeUploadModal()">Cancel</button>
+                    <button type="submit" class="btn-confirm" id="uploadBtn">Upload Document</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Webinar Modal -->
+    <div id="webinarModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Add Webinar</h3>
+            <form id="webinarForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="webinarTitle">Title *</label>
+                        <input type="text" id="webinarTitle" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="webinarCategory">Category *</label>
+                        <select id="webinarCategory" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="webinar">Educational Webinar</option>
+                            <option value="training">Training Session</option>
+                            <option value="presentation">Presentation</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="webinarDescription">Description *</label>
+                    <textarea id="webinarDescription" name="description" required placeholder="Brief description of the webinar..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="webinarUrl">Video URL *</label>
+                        <input type="url" id="webinarUrl" name="videoUrl" required placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="webinarDuration">Duration (MM:SS)</label>
+                        <input type="text" id="webinarDuration" name="duration" placeholder="45:30">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="webinarDate">Recording Date</label>
+                        <input type="date" id="webinarDate" name="recordingDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="transcriptFile">Transcript File</label>
+                        <input type="file" id="transcriptFile" name="transcript" accept=".pdf,.doc,.docx,.txt">
+                    </div>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeWebinarModal()">Cancel</button>
+                    <button type="submit" class="btn-confirm">Add Webinar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 INTERPARENTS - European Schools Parent Association. All rights reserved.</p>
+            <p>Contact: <a href="mailto:info@interparents.eu" style="color: #3498db;">info@interparents.eu</a></p>
+        </div>
+    </footer>
+
+    <!-- Load authentication state management first -->
+    <script src="js/script.js"></script>
+    <!-- Then load documents functionality -->
+    <script src="js/documents.js"></script>
+</body>
+</html>
