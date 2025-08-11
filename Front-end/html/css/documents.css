@@ -83,6 +83,11 @@
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 100px;
+    justify-content: center;
 }
 
 .view-btn:hover {
@@ -93,6 +98,17 @@
     background: #27ae60;
     color: white;
 }
+
+.btn-icon {
+    font-size: 1rem;
+    font-weight: normal;
+}
+
+.btn-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
 
 /* Admin Notice */
 .admin-notice {

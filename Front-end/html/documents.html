@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/documents.css">
 </head>
+
 <body>
     <header>
         <div class="container">
@@ -26,7 +28,7 @@
                             </ul>
                         </li>
                         <li><a href="index.html#communications">Communications</a></li>
-                      
+
                         <li><a href="calendar.html">Calendar</a></li>
                         <li><a href="index.html#contact">Contact</a></li>
                         <li><a href="documents.html" style="color: #f39c12; font-weight: 600;">Documents</a></li>
@@ -42,7 +44,8 @@
     <section class="page-hero">
         <div class="container">
             <h1>Documents & Webinars</h1>
-            <p class="subtitle">Access our comprehensive collection of policy documents, guidelines, training materials, and educational webinars to stay informed about European Schools initiatives and best practices.</p>
+            <p class="subtitle">Access our comprehensive collection of policy documents, guidelines, training materials,
+                and educational webinars to stay informed about European Schools initiatives and best practices.</p>
         </div>
     </section>
 
@@ -51,7 +54,8 @@
             <!-- Quick Actions and Search -->
             <div class="documents-actions" id="documentsActions">
                 <div class="search-filters">
-                    <input type="text" id="globalSearch" class="global-search" placeholder="Search documents and webinars...">
+                    <input type="text" id="globalSearch" class="global-search"
+                        placeholder="Search documents and webinars...">
                     <select id="categoryFilter" class="category-filter">
                         <option value="all">All Categories</option>
                         <option value="policy">Policy Documents</option>
@@ -62,9 +66,16 @@
                         <option value="presentation">Presentations</option>
                     </select>
                 </div>
+                <!-- Replace the existing view-controls section in your documents.html with this: -->
                 <div class="view-controls">
-                    <button class="view-btn active" data-view="grid">📋 Grid View</button>
-                    <button class="view-btn" data-view="list">📄 List View</button>
+                    <button class="view-btn active" data-view="grid">
+                        <span class="btn-icon">⊞</span>
+                        <span class="btn-text">Grid View</span>
+                    </button>
+                    <button class="view-btn" data-view="list">
+                        <span class="btn-icon">☰</span>
+                        <span class="btn-text">List View</span>
+                    </button>
                 </div>
             </div>
 
@@ -82,7 +93,8 @@
             <section class="repository-section" id="documentsRepository">
                 <div class="section-header">
                     <h2>📋 Documents Repository</h2>
-                    <p>Essential documents, policies, and guidelines for INTERPARENTS members and European Schools stakeholders.</p>
+                    <p>Essential documents, policies, and guidelines for INTERPARENTS members and European Schools
+                        stakeholders.</p>
                 </div>
 
                 <div class="documents-grid" id="documentsGrid">
@@ -92,7 +104,8 @@
                         <div class="document-info">
                             <h3>INTERPARENTS Statutes 2024</h3>
                             <p class="document-category">Policy Document</p>
-                            <p class="document-description">Updated organizational statutes and governance framework for INTERPARENTS operations.</p>
+                            <p class="document-description">Updated organizational statutes and governance framework for
+                                INTERPARENTS operations.</p>
                             <div class="document-meta">
                                 <span class="document-date">📅 Updated: March 2024</span>
                                 <span class="document-size">📊 2.3 MB</span>
@@ -109,7 +122,8 @@
                         <div class="document-info">
                             <h3>Parent Representative Guidelines</h3>
                             <p class="document-category">Guidelines</p>
-                            <p class="document-description">Comprehensive guide for parent representatives in European Schools governance.</p>
+                            <p class="document-description">Comprehensive guide for parent representatives in European
+                                Schools governance.</p>
                             <div class="document-meta">
                                 <span class="document-date">📅 Updated: January 2024</span>
                                 <span class="document-size">📊 1.8 MB</span>
@@ -126,7 +140,8 @@
                         <div class="document-info">
                             <h3>Committee Participation Handbook</h3>
                             <p class="document-category">Training Materials</p>
-                            <p class="document-description">Training materials for effective participation in JTC and BOG committees.</p>
+                            <p class="document-description">Training materials for effective participation in JTC and
+                                BOG committees.</p>
                             <div class="document-meta">
                                 <span class="document-date">📅 Updated: February 2024</span>
                                 <span class="document-size">📊 3.1 MB</span>
@@ -143,7 +158,8 @@
                         <div class="document-info">
                             <h3>Annual Activity Report 2023</h3>
                             <p class="document-category">Annual Report</p>
-                            <p class="document-description">Comprehensive overview of INTERPARENTS activities and achievements in 2023.</p>
+                            <p class="document-description">Comprehensive overview of INTERPARENTS activities and
+                                achievements in 2023.</p>
                             <div class="document-meta">
                                 <span class="document-date">📅 Published: December 2023</span>
                                 <span class="document-size">📊 4.2 MB</span>
@@ -161,7 +177,8 @@
             <section class="repository-section" id="webinarsRepository">
                 <div class="section-header">
                     <h2>Webinars Repository</h2>
-                    <p>Educational webinars, training sessions, and recorded presentations for European Schools community.</p>
+                    <p>Educational webinars, training sessions, and recorded presentations for European Schools
+                        community.</p>
                 </div>
 
                 <div class="webinars-grid" id="webinarsGrid">
@@ -176,7 +193,8 @@
                         <div class="webinar-info">
                             <h3>Understanding European Schools Curriculum</h3>
                             <p class="webinar-category">Educational Webinar</p>
-                            <p class="webinar-description">Comprehensive overview of the European Schools curriculum structure and assessment methods.</p>
+                            <p class="webinar-description">Comprehensive overview of the European Schools curriculum
+                                structure and assessment methods.</p>
                             <div class="webinar-meta">
                                 <span class="webinar-date">📅 Recorded: March 15, 2024</span>
                                 <span class="webinar-views">👥 348 views</span>
@@ -198,7 +216,8 @@
                         <div class="webinar-info">
                             <h3>Effective Parent Representation</h3>
                             <p class="webinar-category">Training Session</p>
-                            <p class="webinar-description">Training session on effective advocacy and representation techniques for parent associations.</p>
+                            <p class="webinar-description">Training session on effective advocacy and representation
+                                techniques for parent associations.</p>
                             <div class="webinar-meta">
                                 <span class="webinar-date">📅 Recorded: February 28, 2024</span>
                                 <span class="webinar-views">👥 267 views</span>
@@ -220,7 +239,8 @@
                         <div class="webinar-info">
                             <h3>Digital Learning Initiatives 2024</h3>
                             <p class="webinar-category">Policy Presentation</p>
-                            <p class="webinar-description">Presentation on new digital learning policies and technology integration across European Schools.</p>
+                            <p class="webinar-description">Presentation on new digital learning policies and technology
+                                integration across European Schools.</p>
                             <div class="webinar-meta">
                                 <span class="webinar-date">📅 Recorded: January 20, 2024</span>
                                 <span class="webinar-views">👥 412 views</span>
@@ -242,7 +262,8 @@
                         <div class="webinar-info">
                             <h3>Student Well-being and Support Systems</h3>
                             <p class="webinar-category">Educational Webinar</p>
-                            <p class="webinar-description">Discussion on mental health support, counseling services, and well-being initiatives in European Schools.</p>
+                            <p class="webinar-description">Discussion on mental health support, counseling services, and
+                                well-being initiatives in European Schools.</p>
                             <div class="webinar-meta">
                                 <span class="webinar-date">📅 Recorded: December 12, 2023</span>
                                 <span class="webinar-views">👥 589 views</span>
@@ -308,7 +329,8 @@
 
                 <div class="form-group">
                     <label for="documentDescription">Description *</label>
-                    <textarea id="documentDescription" name="description" required placeholder="Brief description of the document..."></textarea>
+                    <textarea id="documentDescription" name="description" required
+                        placeholder="Brief description of the document..."></textarea>
                 </div>
 
                 <div class="form-row">
@@ -319,7 +341,8 @@
                     <div class="form-group">
                         <label>File *</label>
                         <label for="documentFile" class="file-input">
-                            <input type="file" id="documentFile" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx" required>
+                            <input type="file" id="documentFile" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx"
+                                required>
                             Choose File
                         </label>
                         <div id="fileStatus" class="file-status" style="display: none;"></div>
@@ -357,7 +380,8 @@
 
                 <div class="form-group">
                     <label for="webinarDescription">Description *</label>
-                    <textarea id="webinarDescription" name="description" required placeholder="Brief description of the webinar..."></textarea>
+                    <textarea id="webinarDescription" name="description" required
+                        placeholder="Brief description of the webinar..."></textarea>
                 </div>
 
                 <div class="form-row">
@@ -402,4 +426,5 @@
     <!-- Then load documents functionality -->
     <script src="js/documents.js"></script>
 </body>
+
 </html>

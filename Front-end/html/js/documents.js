@@ -102,40 +102,89 @@ class DocumentsManager {
         }
     }
 
-    bindEvents() {
-        // Search functionality
-        const globalSearch = document.getElementById('globalSearch');
+    // Updated bindEvents method - replace the view controls section in your documents.js
+
+bindEvents() {
+    // Search functionality
+    const globalSearch = document.getElementById('globalSearch');
+    if (globalSearch) {
         globalSearch.addEventListener('input', (e) => this.handleSearch(e.target.value));
-
-        // Category filter
-        const categoryFilter = document.getElementById('categoryFilter');
-        categoryFilter.addEventListener('change', (e) => this.handleFilter(e.target.value));
-
-        // View controls
-        document.querySelectorAll('.view-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => this.switchView(e.target.dataset.view));
-        });
-
-        // Upload buttons
-        const uploadDocumentBtn = document.getElementById('uploadDocumentBtn');
-        const uploadWebinarBtn = document.getElementById('uploadWebinarBtn');
-        
-        if (uploadDocumentBtn) {
-            uploadDocumentBtn.addEventListener('click', () => this.openUploadModal('document'));
-        }
-        
-        if (uploadWebinarBtn) {
-            uploadWebinarBtn.addEventListener('click', () => this.openUploadModal('webinar'));
-        }
-
-        // Form submissions
-        document.getElementById('uploadForm').addEventListener('submit', (e) => this.handleDocumentUpload(e));
-        document.getElementById('webinarForm').addEventListener('submit', (e) => this.handleWebinarUpload(e));
-
-        // File input change
-        document.getElementById('documentFile').addEventListener('change', (e) => this.handleFileChange(e));
     }
 
+    // Category filter
+    const categoryFilter = document.getElementById('categoryFilter');
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', (e) => this.handleFilter(e.target.value));
+    }
+
+    // View controls - Updated to be more robust
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Make sure we get the button element, not a child element
+            const button = e.target.closest('.view-btn');
+            if (button && button.dataset.view) {
+                this.switchView(button.dataset.view);
+            }
+        });
+    });
+
+    // Upload buttons
+    const uploadDocumentBtn = document.getElementById('uploadDocumentBtn');
+    const uploadWebinarBtn = document.getElementById('uploadWebinarBtn');
+    
+    if (uploadDocumentBtn) {
+        uploadDocumentBtn.addEventListener('click', () => this.openUploadModal('document'));
+    }
+    
+    if (uploadWebinarBtn) {
+        uploadWebinarBtn.addEventListener('click', () => this.openUploadModal('webinar'));
+    }
+
+    // Form submissions
+    const uploadForm = document.getElementById('uploadForm');
+    const webinarForm = document.getElementById('webinarForm');
+    
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', (e) => this.handleDocumentUpload(e));
+    }
+    
+    if (webinarForm) {
+        webinarForm.addEventListener('submit', (e) => this.handleWebinarUpload(e));
+    }
+
+    // File input change
+    const documentFile = document.getElementById('documentFile');
+    if (documentFile) {
+        documentFile.addEventListener('change', (e) => this.handleFileChange(e));
+    }
+}
+
+// Updated switchView method to be more robust
+switchView(view) {
+    console.log('👀 Switching to view:', view);
+    
+    if (!view || (view !== 'grid' && view !== 'list')) {
+        console.warn('Invalid view type:', view);
+        return;
+    }
+    
+    this.currentView = view;
+    
+    // Update button states
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.view === view) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Update container classes
+    const container = document.querySelector('.main-content');
+    if (container) {
+        container.classList.remove('view-grid', 'view-list');
+        container.classList.add(`view-${view}`);
+    }
+}
     async loadDocuments() {
         try {
             console.log('📄 Loading documents...');
