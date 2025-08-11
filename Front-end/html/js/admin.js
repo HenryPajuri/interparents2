@@ -1,4 +1,4 @@
-// Admin Panel JavaScript
+// Admin Panel JavaScript - Enhanced with Password Validation
 class AdminPanel {
     constructor() {
         this.API_BASE = 'https://interparents-1.onrender.com/api';
@@ -7,12 +7,26 @@ class AdminPanel {
         this.users = [];
         this.currentDeleteId = null;
         this.currentDeleteUserId = null;
+        
+        // Password validation state
+        this.passwordValidation = {
+            strength: false,
+            match: false,
+            requirements: {
+                length: false,
+                lowercase: false,
+                uppercase: false,
+                number: false
+            }
+        };
+        
         this.init();
     }
 
     async init() {
         await this.loadUserInfo();
         this.bindEvents();
+        this.initializePasswordValidation();
         await this.loadCommunications();
         await this.loadUsers();
         this.setupTabs();
@@ -63,21 +77,6 @@ class AdminPanel {
             this.logout();
         });
 
-        const changePasswordBtn = document.getElementById('changePasswordBtn');
-        if (changePasswordBtn) {
-            changePasswordBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.openPasswordModal();
-            });
-        }
-
-        const passwordForm = document.getElementById('passwordChangeForm');
-        if (passwordForm) {
-            passwordForm.addEventListener('submit', (e) => {
-                this.handlePasswordChange(e);
-            });
-        }
-
         document.getElementById('pdfFile').addEventListener('change', (e) => {
             this.handleFileChange(e);
         });
@@ -101,8 +100,189 @@ class AdminPanel {
         document.getElementById('userForm').addEventListener('submit', (e) => {
             this.handleUserCreate(e);
         });
+        
         // Set default publish date to today
         document.getElementById('publishDate').valueAsDate = new Date();
+    }
+
+    // NEW: Initialize password validation for user creation
+    initializePasswordValidation() {
+        const passwordInput = document.getElementById('userPassword');
+        const confirmPasswordInput = document.getElementById('userConfirmPassword');
+
+        if (passwordInput) {
+            passwordInput.addEventListener('input', () => {
+                this.validateUserPasswordStrength();
+                this.validateUserPasswordMatch();
+                this.updateFormValidationState();
+            });
+        }
+
+        if (confirmPasswordInput) {
+            confirmPasswordInput.addEventListener('input', () => {
+                this.validateUserPasswordMatch();
+                this.updateFormValidationState();
+            });
+        }
+
+        // Password toggle functionality
+        document.querySelectorAll('.admin-password-toggle').forEach(btn => {
+            btn.addEventListener('click', (e) => this.togglePasswordVisibility(e));
+        });
+    }
+
+    // NEW: Toggle password visibility
+    togglePasswordVisibility(e) {
+        const button = e.target.closest('.admin-password-toggle');
+        const targetId = button.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        const toggleText = button.querySelector('.toggle-text');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            toggleText.textContent = 'Hide';
+        } else {
+            input.type = 'password';
+            toggleText.textContent = 'Show';
+        }
+    }
+
+    // NEW: Validate password strength for user creation
+    validateUserPasswordStrength() {
+        const password = document.getElementById('userPassword').value;
+        const strengthDiv = document.getElementById('userPasswordStrength');
+        
+        const requirements = {
+            length: password.length >= 6,
+            lowercase: /[a-z]/.test(password),
+            uppercase: /[A-Z]/.test(password),
+            number: /\d/.test(password)
+        };
+
+        // Update requirement indicators with animation
+        Object.keys(requirements).forEach(req => {
+            const element = document.getElementById(`admin-req-${req}`);
+            if (element) {
+                const wasMet = element.classList.contains('met');
+                const isNowMet = requirements[req];
+                
+                element.classList.toggle('met', isNowMet);
+                
+                // Add animation for newly met requirements
+                if (!wasMet && isNowMet) {
+                    element.classList.add('newly-met');
+                    setTimeout(() => element.classList.remove('newly-met'), 300);
+                }
+            }
+        });
+
+        // Store requirements state
+        this.passwordValidation.requirements = requirements;
+
+        // Calculate strength
+        const metRequirements = Object.values(requirements).filter(Boolean).length;
+        let strength = '';
+        let strengthClass = '';
+
+        if (password.length === 0) {
+            strength = '';
+            strengthClass = '';
+        } else if (metRequirements <= 1) {
+            strength = 'Weak password - needs improvement';
+            strengthClass = 'weak';
+        } else if (metRequirements <= 3) {
+            strength = 'Medium strength - almost there';
+            strengthClass = 'medium';
+        } else {
+            strength = 'Strong password - excellent!';
+            strengthClass = 'strong';
+        }
+
+        strengthDiv.textContent = strength;
+        strengthDiv.className = `admin-password-strength ${strengthClass}`;
+
+        // Update validation state
+        this.passwordValidation.strength = metRequirements >= 2;
+
+        return this.passwordValidation.strength;
+    }
+
+    // NEW: Validate password confirmation match
+    validateUserPasswordMatch() {
+        const password = document.getElementById('userPassword').value;
+        const confirmPassword = document.getElementById('userConfirmPassword').value;
+        const matchDiv = document.getElementById('userPasswordMatch');
+
+        if (confirmPassword.length === 0) {
+            matchDiv.textContent = '';
+            matchDiv.className = 'admin-password-match';
+            this.passwordValidation.match = false;
+            return false;
+        }
+
+        const isMatch = password === confirmPassword;
+        matchDiv.textContent = isMatch ? 'Passwords match ✓' : 'Passwords do not match ✗';
+        matchDiv.className = `admin-password-match ${isMatch ? 'match' : 'no-match'}`;
+
+        this.passwordValidation.match = isMatch;
+        return isMatch;
+    }
+
+    // NEW: Update form validation state
+    updateFormValidationState() {
+        const submitBtn = document.getElementById('userSubmitBtn');
+        const passwordInput = document.getElementById('userPassword');
+        const confirmInput = document.getElementById('userConfirmPassword');
+
+        const isValid = this.passwordValidation.strength && this.passwordValidation.match;
+
+        // Update input styling
+        if (passwordInput.value.length > 0) {
+            passwordInput.classList.toggle('password-success', this.passwordValidation.strength);
+            passwordInput.classList.toggle('password-error', !this.passwordValidation.strength);
+        }
+
+        if (confirmInput.value.length > 0) {
+            confirmInput.classList.toggle('password-success', this.passwordValidation.match);
+            confirmInput.classList.toggle('password-error', !this.passwordValidation.match);
+        }
+
+        // Update submit button styling
+        if (passwordInput.value.length > 0 || confirmInput.value.length > 0) {
+            submitBtn.classList.toggle('validation-passed', isValid);
+            submitBtn.classList.toggle('validation-failed', !isValid);
+        }
+    }
+
+    // NEW: Clear password validation
+    clearPasswordValidation() {
+        document.getElementById('userPasswordStrength').textContent = '';
+        document.getElementById('userPasswordMatch').textContent = '';
+        
+        // Reset requirement indicators
+        document.querySelectorAll('.requirement-item').forEach(item => {
+            item.classList.remove('met', 'newly-met');
+        });
+
+        // Reset validation state
+        this.passwordValidation = {
+            strength: false,
+            match: false,
+            requirements: {
+                length: false,
+                lowercase: false,
+                uppercase: false,
+                number: false
+            }
+        };
+
+        // Reset input styling
+        document.getElementById('userPassword').classList.remove('password-success', 'password-error');
+        document.getElementById('userConfirmPassword').classList.remove('password-success', 'password-error');
+        
+        // Reset submit button styling
+        const submitBtn = document.getElementById('userSubmitBtn');
+        submitBtn.classList.remove('validation-passed', 'validation-failed');
     }
 
     setupTabs() {
@@ -335,8 +515,14 @@ class AdminPanel {
         }
     }
 
+    // UPDATED: Enhanced user creation with password validation
     async handleUserCreate(e) {
         e.preventDefault();
+
+        // Validate password requirements before submission
+        if (!this.validateUserForm()) {
+            return;
+        }
 
         const formData = new FormData(e.target);
         const userData = Object.fromEntries(formData.entries());
@@ -364,6 +550,7 @@ class AdminPanel {
             if (response.ok && data.success) {
                 this.showMessage('User created successfully!', 'success');
                 e.target.reset();
+                this.clearPasswordValidation();
                 await this.loadUsers();
             } else {
                 this.showMessage(data.message || 'User creation failed', 'error');
@@ -377,6 +564,29 @@ class AdminPanel {
             submitBtnText.style.display = 'inline';
             submitSpinner.style.display = 'none';
         }
+    }
+
+    // NEW: Validate user creation form
+    validateUserForm() {
+        const password = document.getElementById('userPassword').value;
+        const confirmPassword = document.getElementById('userConfirmPassword').value;
+
+        if (!password || password.length < 6) {
+            this.showMessage('Password must be at least 6 characters long', 'error');
+            return false;
+        }
+
+        if (!this.passwordValidation.strength) {
+            this.showMessage('Password does not meet minimum strength requirements', 'error');
+            return false;
+        }
+
+        if (password !== confirmPassword) {
+            this.showMessage('Passwords do not match', 'error');
+            return false;
+        }
+
+        return true;
     }
 
     renderUsers(filteredData = null) {
@@ -531,72 +741,6 @@ class AdminPanel {
         sessionStorage.clear();
         window.location.href = 'login.html';
     }
-
-    openPasswordModal() {
-        const modal = document.getElementById('passwordModal');
-        if (modal) {
-            modal.classList.add('show');
-            document.getElementById('currentPassword').focus();
-        }
-    }
-
-    async handlePasswordChange(e) {
-        e.preventDefault();
-
-        const form = e.target;
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-
-        if (data.newPassword !== data.confirmPassword) {
-            this.showMessage('New passwords do not match', 'error');
-            return;
-        }
-
-        const saveBtn = document.getElementById('savePasswordBtn');
-        const saveText = document.getElementById('savePasswordText');
-        const saveSpinner = document.getElementById('savePasswordSpinner');
-
-        saveBtn.disabled = true;
-        saveText.style.display = 'none';
-        saveSpinner.style.display = 'inline-flex';
-
-        try {
-            const response = await fetch(`${this.API_BASE}/auth/change-password`, {
-                method: 'PUT',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                this.showMessage('Password changed successfully!', 'success');
-                this.closePasswordModal();
-                form.reset();
-            } else {
-                this.showMessage(result.message || 'Failed to change password', 'error');
-            }
-
-        } catch (error) {
-            console.error('Password change error:', error);
-            this.showMessage('Network error. Please try again.', 'error');
-        } finally {
-            saveBtn.disabled = false;
-            saveText.style.display = 'inline';
-            saveSpinner.style.display = 'none';
-        }
-    }
-
-    closePasswordModal() {
-        const modal = document.getElementById('passwordModal');
-        if (modal) {
-            modal.classList.remove('show');
-            document.getElementById('passwordChangeForm').reset();
-        }
-    }
 }
 
 function hideDeleteModal() {
@@ -605,14 +749,6 @@ function hideDeleteModal() {
 
 function hideDeleteUserModal() {
     document.getElementById('deleteUserModal').classList.remove('show');
-}
-
-function closePasswordModal() {
-    if (window.adminPanel) {
-        window.adminPanel.closePasswordModal();
-    } else {
-        document.getElementById('passwordModal').classList.remove('show');
-    }
 }
 
 let adminPanel;

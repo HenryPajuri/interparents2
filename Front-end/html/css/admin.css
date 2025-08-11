@@ -474,3 +474,273 @@
     }
 }
 
+/* Add these styles to your existing admin.css file */
+
+/* Admin Password Input Wrapper */
+.admin-password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.admin-password-input-wrapper input {
+    width: 100%;
+    padding-right: 4rem;
+    box-sizing: border-box;
+}
+
+/* Admin Password Toggle Button */
+.admin-password-toggle {
+    position: absolute;
+    right: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #7f8c8d;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.admin-password-toggle:hover {
+    color: #3498db;
+    background: rgba(52, 152, 219, 0.1);
+}
+
+/* Admin Password Strength Indicator */
+.admin-password-strength {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    min-height: 1rem;
+}
+
+.admin-password-strength.weak {
+    color: #e74c3c;
+}
+
+.admin-password-strength.medium {
+    color: #f39c12;
+}
+
+.admin-password-strength.strong {
+    color: #27ae60;
+}
+
+/* Admin Password Match Indicator */
+.admin-password-match {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    min-height: 1rem;
+}
+
+.admin-password-match.match {
+    color: #27ae60;
+}
+
+.admin-password-match.no-match {
+    color: #e74c3c;
+}
+
+/* Admin Password Requirements */
+.admin-password-requirements {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #3498db;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.admin-password-requirements h4 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.admin-password-requirements h4::before {
+    content: '🔒';
+    margin-right: 0.5rem;
+    font-size: 1rem;
+}
+
+/* Requirements Grid */
+.requirements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.8rem;
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    border: 1px solid #e8ecef;
+}
+
+.requirement-item:hover {
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
+}
+
+.req-icon {
+    margin-right: 0.8rem;
+    font-size: 0.9rem;
+    color: #bdc3c7;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    min-width: 16px;
+}
+
+.req-text {
+    font-size: 0.8rem;
+    color: #666;
+    transition: color 0.3s ease;
+}
+
+/* Met requirement styling */
+.requirement-item.met {
+    border-color: #27ae60;
+    background: rgba(39, 174, 96, 0.05);
+}
+
+.requirement-item.met .req-icon {
+    content: '✓';
+    color: #27ae60;
+}
+
+.requirement-item.met .req-icon::before {
+    content: '✓';
+}
+
+.requirement-item.met .req-text {
+    color: #27ae60;
+    font-weight: 500;
+}
+
+/* Input validation states */
+.form-group input.password-error {
+    border-color: #e74c3c;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+.form-group input.password-success {
+    border-color: #27ae60;
+    box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+}
+
+/* Enhanced form styling for password fields */
+.form-group:has(.admin-password-input-wrapper) {
+    position: relative;
+}
+
+.form-group:has(.admin-password-input-wrapper):focus-within {
+    transform: translateY(-1px);
+}
+
+/* Password strength progress bar */
+.admin-password-strength::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 3px;
+    background: #e8ecef;
+    border-radius: 3px;
+    margin-bottom: 0.3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-password-strength.weak::before {
+    background: linear-gradient(90deg, #e74c3c 33%, #e8ecef 33%);
+}
+
+.admin-password-strength.medium::before {
+    background: linear-gradient(90deg, #f39c12 66%, #e8ecef 66%);
+}
+
+.admin-password-strength.strong::before {
+    background: #27ae60;
+}
+
+/* Success animation for requirements */
+@keyframes requirementMet {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.requirement-item.newly-met {
+    animation: requirementMet 0.3s ease;
+}
+
+/* Form validation styling */
+.form-group.has-error input {
+    border-color: #e74c3c;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+.form-group.has-success input {
+    border-color: #27ae60;
+    box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+}
+
+/* Enhanced submit button when validation passes */
+.upload-btn.validation-passed {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+}
+
+.upload-btn.validation-failed {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .requirements-grid {
+        grid-template-columns: 1fr;
+        gap: 0.6rem;
+    }
+    
+    .admin-password-requirements {
+        padding: 1rem;
+    }
+    
+    .requirement-item {
+        padding: 0.4rem;
+    }
+    
+    .req-text {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-password-input-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .admin-password-toggle {
+        position: static;
+        transform: none;
+        margin-top: 0.5rem;
+        align-self: flex-end;
+    }
+    
+    .admin-password-requirements h4 {
+        font-size: 0.9rem;
+    }
+}

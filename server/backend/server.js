@@ -1016,35 +1016,81 @@ app.get('/api/users', auth, adminAuth, async (req, res) => {
     }
 });
 
+
 app.post('/api/users', auth, adminAuth, [
-    body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 6 }),
-    body('name').trim().isLength({ min: 2 }),
-    body('school').trim().isLength({ min: 2 })
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+    body('confirmPassword').notEmpty().withMessage('Password confirmation is required'),
+    body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
+    body('school').trim().isLength({ min: 2 }).withMessage('School must be at least 2 characters'),
+    body('role').isIn(['member', 'executive', 'admin']).withMessage('Invalid role selected')
 ], async (req, res) => {
     try {
+        console.log(`👤 User creation request from admin: ${req.user.email}`);
+        
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid input data',
+                message: 'Validation failed',
                 errors: errors.array()
             });
         }
 
-        const { email, password, name, role, school, position } = req.body;
+        const { email, password, confirmPassword, name, role, school, position } = req.body;
 
+        // Enhanced password validation
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Passwords do not match'
+            });
+        }
+
+        // Password strength validation (matching frontend requirements)
+        const passwordRequirements = {
+            minLength: password.length >= 6,
+            hasLowercase: /[a-z]/.test(password),
+            hasUppercase: /[A-Z]/.test(password),
+            hasNumber: /\d/.test(password)
+        };
+
+        const strengthScore = Object.values(passwordRequirements).filter(Boolean).length;
+        const unmetRequirements = [];
+
+        if (!passwordRequirements.minLength) unmetRequirements.push('at least 6 characters');
+        if (!passwordRequirements.hasLowercase) unmetRequirements.push('at least one lowercase letter');
+        if (!passwordRequirements.hasUppercase) unmetRequirements.push('at least one uppercase letter');
+        if (!passwordRequirements.hasNumber) unmetRequirements.push('at least one number');
+
+        if (strengthScore < 2) {
+            return res.status(400).json({
+                success: false,
+                message: `Password does not meet minimum requirements. Missing: ${unmetRequirements.join(', ')}`
+            });
+        }
+
+        // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({
                 success: false,
-                message: 'User already exists'
+                message: 'A user with this email already exists'
             });
         }
 
+        // Role validation - only admins can create other admins
+        if (role === 'admin' && req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: 'Only administrators can create admin accounts'
+            });
+        }
+
+        // Create new user
         const user = new User({
             email,
-            password,
+            password, // Will be hashed by pre-save middleware
             name,
             role: role || 'member',
             school,
@@ -1053,24 +1099,36 @@ app.post('/api/users', auth, adminAuth, [
 
         await user.save();
 
+        console.log(`✅ User created successfully: ${user.email} (${user.role}) by ${req.user.email}`);
+
         res.status(201).json({
             success: true,
-            message: 'User created successfully',
+            message: `User created successfully with ${strengthScore === 4 ? 'strong' : strengthScore === 3 ? 'good' : 'acceptable'} password security`,
             user: {
                 id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
                 school: user.school,
-                position: user.position
+                position: user.position,
+                createdAt: user.createdAt
             }
         });
 
     } catch (error) {
         console.error('Create user error:', error);
+        
+        // Handle duplicate key error
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: 'A user with this email already exists'
+            });
+        }
+        
         res.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Server error while creating user'
         });
     }
 });
