@@ -645,6 +645,100 @@ console.log('✅ Events routes registered successfully');
 
 // ========== AUTHENTICATION ROUTES ==========
 
+// Add this route to your server.js file in the AUTHENTICATION ROUTES section
+
+// PUT /api/auth/change-password - Change user password
+app.put('/api/auth/change-password', [
+    auth,
+    body('currentPassword').notEmpty().withMessage('Current password is required'),
+    body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters long'),
+    body('confirmPassword').notEmpty().withMessage('Password confirmation is required')
+], async (req, res) => {
+    try {
+        console.log(`🔒 Password change request from user: ${req.user.email}`);
+        
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Validation failed',
+                errors: errors.array()
+            });
+        }
+
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+
+        // Verify new password matches confirmation
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'New passwords do not match'
+            });
+        }
+
+        // Verify new password is different from current
+        if (currentPassword === newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'New password must be different from current password'
+            });
+        }
+
+        // Get user with password for verification
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        // Verify current password
+        const isCurrentPasswordValid = await user.comparePassword(currentPassword);
+        if (!isCurrentPasswordValid) {
+            console.log(`❌ Invalid current password for user: ${req.user.email}`);
+            return res.status(400).json({
+                success: false,
+                message: 'Current password is incorrect'
+            });
+        }
+
+        // Additional password strength validation
+        const passwordRegex = {
+            minLength: newPassword.length >= 6,
+            hasLowercase: /[a-z]/.test(newPassword),
+            hasUppercase: /[A-Z]/.test(newPassword),
+            hasNumber: /\d/.test(newPassword)
+        };
+
+        const strengthScore = Object.values(passwordRegex).filter(Boolean).length;
+        if (strengthScore < 2) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password does not meet minimum strength requirements'
+            });
+        }
+
+        // Update password (will be hashed by pre-save middleware)
+        user.password = newPassword;
+        await user.save();
+
+        console.log(`✅ Password changed successfully for user: ${req.user.email}`);
+
+        res.json({
+            success: true,
+            message: 'Password changed successfully'
+        });
+
+    } catch (error) {
+        console.error('Password change error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while changing password'
+        });
+    }
+});
+
 app.post('/api/auth/login', loginLimiter, [
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 6 })

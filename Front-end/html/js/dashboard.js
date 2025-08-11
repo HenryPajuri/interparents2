@@ -2,6 +2,7 @@ class Dashboard {
     constructor() {
         this.API_BASE = 'https://interparents-1.onrender.com/api';
         this.user = null;
+        this.passwordChangeVisible = false;
         console.log('Dashboard initialized with API_BASE:', this.API_BASE);
         this.init();
     }
@@ -10,6 +11,7 @@ class Dashboard {
         console.log('Starting dashboard initialization...');
         await this.loadUserInfo();
         this.bindEvents();
+        this.initializePasswordChange();
     }
 
     async loadUserInfo() {
@@ -20,7 +22,6 @@ class Dashboard {
             });
 
             console.log('Response status:', response.status);
-            console.log('Response headers:', [...response.headers.entries()]);
 
             if (response.ok) {
                 const data = await response.json();
@@ -36,14 +37,12 @@ class Dashboard {
                 }
             } else {
                 console.log('Response not ok, status:', response.status);
-        
                 const errorText = await response.text();
                 console.log('Error response text:', errorText);
                 this.redirectToLogin();
             }
         } catch (error) {
             console.error('Error loading user info:', error);
-            console.error('Error details:', error.message, error.stack);
             this.redirectToLogin();
         }
     }
@@ -54,15 +53,15 @@ class Dashboard {
         const greeting = document.getElementById('userGreeting');
         if (greeting) {
             greeting.textContent = `Welcome back, ${this.user.name}!`;
-            console.log('Updated greeting');
-        } else {
-            console.error('Greeting element not found');
         }
 
         const userCard = document.getElementById('userInfoCard');
         if (userCard) {
             userCard.innerHTML = `
                 <h2>Your Profile</h2>
+                <button class="change-password-trigger" id="changePasswordTrigger">
+                    🔒 Change Password
+                </button>
                 <div class="user-details">
                     <div class="detail-row">
                         <span class="label">Name:</span>
@@ -92,33 +91,18 @@ class Dashboard {
                     ` : ''}
                 </div>
             `;
-            console.log('Updated user info card');
-        } else {
-            console.error('User info card element not found');
         }
 
         if (this.user.role === 'admin' || this.user.role === 'executive') {
-            console.log('User has admin/executive role, showing admin features');
-            
             const adminCard = document.getElementById('adminCard');
             const uploadBtn = document.getElementById('uploadBtn');
             
-            if (adminCard) {
-                adminCard.style.display = 'block';
-                console.log('Showed admin card');
-            } else {
-                console.error('Admin card element not found');
-            }
-            
-            if (uploadBtn) {
-                uploadBtn.style.display = 'block';
-                console.log('Showed upload button');
-            } else {
-                console.error('Upload button element not found');
-            }
-        } else {
-            console.log('User role is:', this.user.role, '- no admin features');
+            if (adminCard) adminCard.style.display = 'block';
+            if (uploadBtn) uploadBtn.style.display = 'block';
         }
+
+        // Bind the change password trigger after UI update
+        this.bindPasswordTrigger();
     }
 
     capitalizeRole(role) {
@@ -134,15 +118,300 @@ class Dashboard {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                console.log('Logout clicked');
                 this.logout();
             });
-            console.log('Logout button bound');
-        } else {
-            console.error('Logout button not found');
         }
 
         this.setCacheHeaders();
+    }
+
+    bindPasswordTrigger() {
+        const trigger = document.getElementById('changePasswordTrigger');
+        if (trigger) {
+            trigger.addEventListener('click', () => this.togglePasswordChange());
+        }
+    }
+
+    initializePasswordChange() {
+        // Bind password change form events
+        this.bindPasswordChangeEvents();
+        this.initializePasswordValidation();
+    }
+
+    bindPasswordChangeEvents() {
+        // Form submission
+        const form = document.getElementById('passwordChangeForm');
+        if (form) {
+            form.addEventListener('submit', (e) => this.handlePasswordChange(e));
+        }
+
+        // Cancel button
+        const cancelBtn = document.getElementById('cancelPasswordChange');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => this.hidePasswordChange());
+        }
+
+        // Password toggle buttons
+        document.querySelectorAll('.password-toggle').forEach(btn => {
+            btn.addEventListener('click', (e) => this.togglePasswordVisibility(e));
+        });
+    }
+
+    initializePasswordValidation() {
+        const newPasswordInput = document.getElementById('newPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+
+        if (newPasswordInput) {
+            newPasswordInput.addEventListener('input', () => {
+                this.validatePasswordStrength();
+                this.validatePasswordMatch();
+            });
+        }
+
+        if (confirmPasswordInput) {
+            confirmPasswordInput.addEventListener('input', () => this.validatePasswordMatch());
+        }
+    }
+
+    togglePasswordChange() {
+        const passwordCard = document.getElementById('passwordChangeCard');
+        
+        if (!this.passwordChangeVisible) {
+            this.showPasswordChange();
+        } else {
+            this.hidePasswordChange();
+        }
+    }
+
+    showPasswordChange() {
+        const passwordCard = document.getElementById('passwordChangeCard');
+        const trigger = document.getElementById('changePasswordTrigger');
+        
+        if (passwordCard) {
+            passwordCard.style.display = 'block';
+            this.passwordChangeVisible = true;
+            
+            // Scroll to password change section
+            setTimeout(() => {
+                passwordCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+        
+        if (trigger) {
+            trigger.textContent = '❌ Cancel Password Change';
+        }
+    }
+
+    hidePasswordChange() {
+        const passwordCard = document.getElementById('passwordChangeCard');
+        const trigger = document.getElementById('changePasswordTrigger');
+        const form = document.getElementById('passwordChangeForm');
+        
+        if (passwordCard) {
+            passwordCard.style.display = 'none';
+            this.passwordChangeVisible = false;
+        }
+        
+        if (trigger) {
+            trigger.textContent = '🔒 Change Password';
+        }
+        
+        if (form) {
+            form.reset();
+            this.clearPasswordValidation();
+        }
+        
+        this.hidePasswordMessage();
+    }
+
+    togglePasswordVisibility(e) {
+        const button = e.target.closest('.password-toggle');
+        const targetId = button.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        const toggleText = button.querySelector('.toggle-text');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            toggleText.textContent = 'Hide';
+        } else {
+            input.type = 'password';
+            toggleText.textContent = 'Show';
+        }
+    }
+
+    validatePasswordStrength() {
+        const password = document.getElementById('newPassword').value;
+        const strengthDiv = document.getElementById('passwordStrength');
+        const requirements = {
+            length: password.length >= 6,
+            lowercase: /[a-z]/.test(password),
+            uppercase: /[A-Z]/.test(password),
+            number: /\d/.test(password)
+        };
+
+        // Update requirement indicators
+        Object.keys(requirements).forEach(req => {
+            const element = document.getElementById(`req-${req}`);
+            if (element) {
+                element.classList.toggle('met', requirements[req]);
+            }
+        });
+
+        // Calculate strength
+        const metRequirements = Object.values(requirements).filter(Boolean).length;
+        let strength = '';
+        let strengthClass = '';
+
+        if (password.length === 0) {
+            strength = '';
+            strengthClass = '';
+        } else if (metRequirements <= 1) {
+            strength = 'Weak password';
+            strengthClass = 'weak';
+        } else if (metRequirements <= 3) {
+            strength = 'Medium strength';
+            strengthClass = 'medium';
+        } else {
+            strength = 'Strong password';
+            strengthClass = 'strong';
+        }
+
+        strengthDiv.textContent = strength;
+        strengthDiv.className = `password-strength ${strengthClass}`;
+
+        return metRequirements >= 2; // Minimum viable password
+    }
+
+    validatePasswordMatch() {
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const matchDiv = document.getElementById('passwordMatch');
+
+        if (confirmPassword.length === 0) {
+            matchDiv.textContent = '';
+            matchDiv.className = 'password-match';
+            return false;
+        }
+
+        const isMatch = newPassword === confirmPassword;
+        matchDiv.textContent = isMatch ? 'Passwords match ✓' : 'Passwords do not match';
+        matchDiv.className = `password-match ${isMatch ? 'match' : 'no-match'}`;
+
+        return isMatch;
+    }
+
+    clearPasswordValidation() {
+        document.getElementById('passwordStrength').textContent = '';
+        document.getElementById('passwordMatch').textContent = '';
+        
+        // Reset requirement indicators
+        document.querySelectorAll('.password-requirements li').forEach(li => {
+            li.classList.remove('met');
+        });
+    }
+
+    async handlePasswordChange(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        const data = {
+            currentPassword: formData.get('currentPassword'),
+            newPassword: formData.get('newPassword'),
+            confirmPassword: formData.get('confirmPassword')
+        };
+
+        // Validate form
+        if (!this.validatePasswordForm(data)) {
+            return;
+        }
+
+        const saveBtn = document.getElementById('savePasswordBtn');
+        const saveText = document.getElementById('savePasswordText');
+        const saveSpinner = document.getElementById('savePasswordSpinner');
+
+        // Set loading state
+        saveBtn.disabled = true;
+        saveText.style.display = 'none';
+        saveSpinner.style.display = 'inline-flex';
+
+        try {
+            const response = await fetch(`${this.API_BASE}/auth/change-password`, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                this.showPasswordMessage('Password changed successfully! You may need to log in again.', 'success');
+                form.reset();
+                this.clearPasswordValidation();
+                
+                // Auto-hide after success
+                setTimeout(() => {
+                    this.hidePasswordChange();
+                }, 3000);
+            } else {
+                this.showPasswordMessage(result.message || 'Failed to change password', 'error');
+            }
+
+        } catch (error) {
+            console.error('Password change error:', error);
+            this.showPasswordMessage('Network error. Please try again.', 'error');
+        } finally {
+            // Reset loading state
+            saveBtn.disabled = false;
+            saveText.style.display = 'inline';
+            saveSpinner.style.display = 'none';
+        }
+    }
+
+    validatePasswordForm(data) {
+        const { currentPassword, newPassword, confirmPassword } = data;
+
+        if (!currentPassword) {
+            this.showPasswordMessage('Current password is required', 'error');
+            return false;
+        }
+
+        if (!newPassword || newPassword.length < 6) {
+            this.showPasswordMessage('New password must be at least 6 characters long', 'error');
+            return false;
+        }
+
+        if (newPassword !== confirmPassword) {
+            this.showPasswordMessage('New passwords do not match', 'error');
+            return false;
+        }
+
+        if (currentPassword === newPassword) {
+            this.showPasswordMessage('New password must be different from current password', 'warning');
+            return false;
+        }
+
+        if (!this.validatePasswordStrength()) {
+            this.showPasswordMessage('Password does not meet minimum requirements', 'error');
+            return false;
+        }
+
+        return true;
+    }
+
+    showPasswordMessage(message, type = 'info') {
+        const messageDiv = document.getElementById('passwordChangeMessage');
+        messageDiv.textContent = message;
+        messageDiv.className = `show ${type}`;
+    }
+
+    hidePasswordMessage() {
+        const messageDiv = document.getElementById('passwordChangeMessage');
+        messageDiv.className = '';
+        messageDiv.textContent = '';
     }
 
     setCacheHeaders() {
@@ -164,16 +433,11 @@ class Dashboard {
             });
 
             console.log('Logout response status:', response.status);
-
-            // Clear session storage
             sessionStorage.clear();
-
-            // Redirect to login
             console.log('Redirecting to login...');
             window.location.href = 'login.html';
         } catch (error) {
             console.error('Logout error:', error);
-            // Force redirect even if logout request fails
             sessionStorage.clear();
             window.location.href = 'login.html';
         }

@@ -50,10 +50,78 @@
 
     <div class="container">
         <div class="dashboard-content">
-            <div class="user-info-card" id="userInfoCard">
-                <h2>Your Profile</h2>
-                <div class="loading">Loading your information...</div>
+            <!-- Replace the user-info-card section in dashboard.html with this enhanced version -->
+
+<div class="user-info-card" id="userInfoCard">
+    <h2>Your Profile</h2>
+    <div class="loading">Loading your information...</div>
+</div>
+
+<!-- New Password Change Section -->
+<div class="password-change-card" id="passwordChangeCard" style="display: none;">
+    <h2>Change Password</h2>
+    <p class="password-change-description">Update your account password for enhanced security.</p>
+    
+    <form id="passwordChangeForm" class="password-change-form">
+        <div class="form-group">
+            <label for="currentPassword">Current Password *</label>
+            <div class="password-input-wrapper">
+                <input type="password" id="currentPassword" name="currentPassword" required 
+                       placeholder="Enter your current password" autocomplete="current-password">
+                <button type="button" class="password-toggle" data-target="currentPassword">
+                    <span class="toggle-text">Show</span>
+                </button>
             </div>
+        </div>
+
+        <div class="form-group">
+            <label for="newPassword">New Password *</label>
+            <div class="password-input-wrapper">
+                <input type="password" id="newPassword" name="newPassword" required 
+                       minlength="6" placeholder="Enter new password (min 6 characters)" autocomplete="new-password">
+                <button type="button" class="password-toggle" data-target="newPassword">
+                    <span class="toggle-text">Show</span>
+                </button>
+            </div>
+            <div class="password-strength" id="passwordStrength"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="confirmPassword">Confirm New Password *</label>
+            <div class="password-input-wrapper">
+                <input type="password" id="confirmPassword" name="confirmPassword" required 
+                       minlength="6" placeholder="Confirm your new password" autocomplete="new-password">
+                <button type="button" class="password-toggle" data-target="confirmPassword">
+                    <span class="toggle-text">Show</span>
+                </button>
+            </div>
+            <div class="password-match" id="passwordMatch"></div>
+        </div>
+
+        <div class="password-requirements">
+            <h4>Password Requirements:</h4>
+            <ul>
+                <li id="req-length">At least 6 characters</li>
+                <li id="req-lowercase">At least one lowercase letter</li>
+                <li id="req-uppercase">At least one uppercase letter</li>
+                <li id="req-number">At least one number</li>
+            </ul>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="btn-cancel" id="cancelPasswordChange">Cancel</button>
+            <button type="submit" class="btn-save" id="savePasswordBtn">
+                <span id="savePasswordText">Change Password</span>
+                <span id="savePasswordSpinner" style="display: none;">
+                    <div class="spinner"></div>
+                    Updating...
+                </span>
+            </button>
+        </div>
+    </form>
+    
+    <div id="passwordChangeMessage"></div>
+</div>
 
             <div class="dashboard-grid">
                 <div class="dashboard-card">
