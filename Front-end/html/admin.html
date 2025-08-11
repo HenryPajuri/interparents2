@@ -40,234 +40,246 @@
     </section>
 
     <div class="container">
-        <div class="admin-content">
-            <div id="messageContainer"></div>
 
-            <div class="admin-tabs">
-                <button class="admin-tab active" data-tab="communications">📄 Manage Communications</button>
-                <button class="admin-tab" data-tab="users" id="usersTab">👥 Manage Users</button>
-            </div>
+<div class="admin-content">
+    <div id="messageContainer"></div>
 
-            <div id="communications" class="tab-content active">
+    <!-- Tab Navigation -->
+    <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="communications">📄 Manage Communications</button>
+        <button class="admin-tab" data-tab="users" id="usersTab">👥 Manage Users</button>
+    </div>
 
-<div class="upload-form">
-    <h3>Add New User</h3>
-    <form id="userForm">
-        <div class="form-row">
-            <div class="form-group">
-                <label for="userName">Full Name *</label>
-                <input type="text" id="userName" name="name" required>
-            </div>
-            <div class="form-group">
-                <label for="userEmail">Email Address *</label>
-                <input type="email" id="userEmail" name="email" required>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="userPassword">Password *</label>
-                <div class="password-input-wrapper">
-                    <input type="password" id="userPassword" name="password" required minlength="6" 
-                           placeholder="Minimum 6 characters">
-                    <button type="button" class="password-toggle" data-target="userPassword">
-                        <span class="toggle-text">Show</span>
-                    </button>
-                </div>
-                <div class="password-strength" id="userPasswordStrength"></div>
-            </div>
-            <div class="form-group">
-                <label for="userRole">Role *</label>
-                <select id="userRole" name="role" required>
-                    <option value="">Select Role</option>
-                    <option value="member">Member</option>
-                    <option value="executive">Executive</option>
-                    <option value="admin">Admin</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Password Requirements Section -->
-        <div class="password-requirements">
-            <h4>Password Requirements:</h4>
-            <ul>
-                <li id="user-req-length">At least 6 characters</li>
-                <li id="user-req-lowercase">At least one lowercase letter</li>
-                <li id="user-req-uppercase">At least one uppercase letter</li>
-                <li id="user-req-number">At least one number</li>
-            </ul>
-            <div class="password-help">
-                <small>💡 Strong passwords help protect user accounts and system security.</small>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="userSchool">School *</label>
-                <select id="userSchool" name="school" required>
-                    <option value="">Select School</option>
-                    <option value="Brussels I (Uccle)">Brussels I (Uccle)</option>
-                    <option value="Brussels II (Woluwe)">Brussels II (Woluwe)</option>
-                    <option value="Brussels III (Ixelles)">Brussels III (Ixelles)</option>
-                    <option value="Brussels IV (Laeken)">Brussels IV (Laeken)</option>
-                    <option value="Frankfurt">Frankfurt</option>
-                    <option value="Karlsruhe">Karlsruhe</option>
-                    <option value="Munich">Munich</option>
-                    <option value="Luxembourg I">Luxembourg I</option>
-                    <option value="Luxembourg II">Luxembourg II</option>
-                    <option value="Varese">Varese</option>
-                    <option value="Alicante">Alicante</option>
-                    <option value="Bergen">Bergen</option>
-                    <option value="Mol">Mol</option>
-                    <option value="INTERPARENTS Central">INTERPARENTS Central</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="userPosition">Position</label>
-                <input type="text" id="userPosition" name="position" placeholder="Parent Representative">
-            </div>
-        </div>
-
-        <button type="submit" class="upload-btn" id="userSubmitBtn">
-            <span id="userSubmitBtnText">Add User</span>
-            <span id="userSubmitSpinner" style="display: none;">
-                <div class="spinner"></div>
-                Adding User...
-            </span>
-        </button>
-    </form>
-</div>
-
-                <div class="communications-table">
-                    <div class="table-header">
-                        <h3>Existing Communications</h3>
-                        <input type="text" id="searchInput" class="search-box" placeholder="Search communications...">
+    <!-- Communications Tab Content -->
+    <div id="communications" class="tab-content active">
+        <div class="upload-form">
+            <h3>Upload New Communication</h3>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="title">Title *</label>
+                        <input type="text" id="title" name="title" required>
                     </div>
-                    <div class="table-container">
-                        <table class="comm-table">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Category</th>
-                                    <th>Publish Date</th>
-                                    <th>Uploaded By</th>
-                                    <th>File Size</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="communicationsTableBody">
-                                <tr>
-                                    <td colspan="6" class="loading">
-                                        <div class="spinner"></div>
-                                        Loading communications...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="form-group">
+                        <label for="category">Category *</label>
+                        <select id="category" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="JTC">Joint Teaching Committee</option>
+                            <option value="BOG">Board of Governors</option>
+                            <option value="Policy">Policy Document</option>
+                            <option value="Report">Report</option>
+                            <option value="Memo">Memo</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label for="description">Description *</label>
+                    <textarea id="description" name="description" required placeholder="Brief description of the communication..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="publishDate">Publish Date</label>
+                        <input type="date" id="publishDate" name="publishDate">
+                    </div>
+                    <div class="form-group">
+                        <label>PDF File *</label>
+                        <label for="pdfFile" class="file-input">
+                            <input type="file" id="pdfFile" name="pdf" accept=".pdf" required>
+                            Choose PDF File
+                        </label>
+                        <div id="fileStatus" class="file-status" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="upload-btn" id="uploadBtn">
+                    <span id="uploadBtnText">Upload Communication</span>
+                    <span id="uploadSpinner" style="display: none;">
+                        <div class="spinner"></div>
+                        Uploading...
+                    </span>
+                </button>
+            </form>
+        </div>
+
+        <div class="communications-table">
+            <div class="table-header">
+                <h3>Existing Communications</h3>
+                <input type="text" id="searchInput" class="search-box" placeholder="Search communications...">
             </div>
-
-            <div id="users" class="tab-content">
-                <div class="up      <form id="userForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="userName">Full Name *</label>
-                                <input type="text" id="userName" name="name" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="userEmail">Email Address *</label>
-                                <input type="email" id="userEmail" name="email" required>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="userPassword">Password *</label>
-                                <input type="password" id="userPassword" name="password" required minlength="6" placeholder="Minimum 6 characters">
-                            </div>
-                            <div class="form-group">
-                                <label for="userRole">Role *</label>
-                                <select id="userRole" name="role" required>
-                                    <option value="">Select Role</option>
-                                    <option value="member">Member</option>
-                                    <option value="executive">Executive</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="userSchool">School *</label>
-                                <select id="userSchool" name="school" required>
-                                    <option value="">Select School</option>
-                                    <option value="Brussels I (Uccle)">Brussels I (Uccle)</option>
-                                    <option value="Brussels II (Woluwe)">Brussels II (Woluwe)</option>
-                                    <option value="Brussels III (Ixelles)">Brussels III (Ixelles)</option>
-                                    <option value="Brussels IV (Laeken)">Brussels IV (Laeken)</option>
-                                    <option value="Frankfurt">Frankfurt</option>
-                                    <option value="Karlsruhe">Karlsruhe</option>
-                                    <option value="Munich">Munich</option>
-                                    <option value="Luxembourg I">Luxembourg I</option>
-                                    <option value="Luxembourg II">Luxembourg II</option>
-                                    <option value="Varese">Varese</option>
-                                    <option value="Alicante">Alicante</option>
-                                    <option value="Bergen">Bergen</option>
-                                    <option value="Mol">Mol</option>
-                                    <option value="INTERPARENTS Central">INTERPARENTS Central</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="userPosition">Position</label>
-                                <input type="text" id="userPosition" name="position" placeholder="Parent Representative">
-                            </div>
-                        </div>
-
-                        <button type="submit" class="upload-btn" id="userSubmitBtn">
-                            <span id="userSubmitBtnText">Add User</span>
-                            <span id="userSubmitSpinner" style="display: none;">
+            <div class="table-container">
+                <table class="comm-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Publish Date</th>
+                            <th>Uploaded By</th>
+                            <th>File Size</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="communicationsTableBody">
+                        <tr>
+                            <td colspan="6" class="loading">
                                 <div class="spinner"></div>
-                                Adding User...
-                            </span>
-                        </button>
-                    </form>load-form">
-                    <h3>Add New User</h3>
-              
-                </div>
-
-                <div class="communications-table">
-                    <div class="table-header">
-                        <h3>Existing Users</h3>
-                        <input type="text" id="userSearchInput" class="search-box" placeholder="Search users...">
-                    </div>
-                    <div class="table-container">
-                        <table class="comm-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>School</th>
-                                    <th>Position</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTableBody">
-                                <tr>
-                                    <td colspan="6" class="loading">
-                                        <div class="spinner"></div>
-                                        Loading users...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                Loading communications...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
+    <!-- Users Tab Content -->
+    <div id="users" class="tab-content">
+        <div class="upload-form">
+            <h3>Add New User</h3>
+            <form id="userForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userName">Full Name *</label>
+                        <input type="text" id="userName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail">Email Address *</label>
+                        <input type="email" id="userEmail" name="email" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userPassword">Password *</label>
+                        <div class="admin-password-input-wrapper">
+                            <input type="password" id="userPassword" name="password" required minlength="6" 
+                                   placeholder="Minimum 6 characters">
+                            <button type="button" class="admin-password-toggle" data-target="userPassword">
+                                <span class="toggle-text">Show</span>
+                            </button>
+                        </div>
+                        <div class="admin-password-strength" id="userPasswordStrength"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="userConfirmPassword">Confirm Password *</label>
+                        <div class="admin-password-input-wrapper">
+                            <input type="password" id="userConfirmPassword" name="confirmPassword" required minlength="6" 
+                                   placeholder="Confirm password">
+                            <button type="button" class="admin-password-toggle" data-target="userConfirmPassword">
+                                <span class="toggle-text">Show</span>
+                            </button>
+                        </div>
+                        <div class="admin-password-match" id="userPasswordMatch"></div>
+                    </div>
+                </div>
+
+                <!-- Password Requirements Section -->
+                <div class="admin-password-requirements">
+                    <h4>Password Requirements:</h4>
+                    <div class="requirements-grid">
+                        <div class="requirement-item" id="admin-req-length">
+                            <span class="req-icon">○</span>
+                            <span class="req-text">At least 6 characters</span>
+                        </div>
+                        <div class="requirement-item" id="admin-req-lowercase">
+                            <span class="req-icon">○</span>
+                            <span class="req-text">One lowercase letter</span>
+                        </div>
+                        <div class="requirement-item" id="admin-req-uppercase">
+                            <span class="req-icon">○</span>
+                            <span class="req-text">One uppercase letter</span>
+                        </div>
+                        <div class="requirement-item" id="admin-req-number">
+                            <span class="req-icon">○</span>
+                            <span class="req-text">One number</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userRole">Role *</label>
+                        <select id="userRole" name="role" required>
+                            <option value="">Select Role</option>
+                            <option value="member">Member</option>
+                            <option value="executive">Executive</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="userSchool">School *</label>
+                        <select id="userSchool" name="school" required>
+                            <option value="">Select School</option>
+                            <option value="Brussels I (Uccle)">Brussels I (Uccle)</option>
+                            <option value="Brussels II (Woluwe)">Brussels II (Woluwe)</option>
+                            <option value="Brussels III (Ixelles)">Brussels III (Ixelles)</option>
+                            <option value="Brussels IV (Laeken)">Brussels IV (Laeken)</option>
+                            <option value="Frankfurt">Frankfurt</option>
+                            <option value="Karlsruhe">Karlsruhe</option>
+                            <option value="Munich">Munich</option>
+                            <option value="Luxembourg I">Luxembourg I</option>
+                            <option value="Luxembourg II">Luxembourg II</option>
+                            <option value="Varese">Varese</option>
+                            <option value="Alicante">Alicante</option>
+                            <option value="Bergen">Bergen</option>
+                            <option value="Mol">Mol</option>
+                            <option value="INTERPARENTS Central">INTERPARENTS Central</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userPosition">Position</label>
+                        <input type="text" id="userPosition" name="position" placeholder="Parent Representative">
+                    </div>
+                    <div class="form-group">
+                        <!-- Empty for grid balance -->
+                    </div>
+                </div>
+
+                <button type="submit" class="upload-btn" id="userSubmitBtn">
+                    <span id="userSubmitBtnText">Add User</span>
+                    <span id="userSubmitSpinner" style="display: none;">
+                        <div class="spinner"></div>
+                        Adding User...
+                    </span>
+                </button>
+            </form>
+        </div>
+
+        <div class="communications-table">
+            <div class="table-header">
+                <h3>Existing Users</h3>
+                <input type="text" id="userSearchInput" class="search-box" placeholder="Search users...">
+            </div>
+            <div class="table-container">
+                <table class="comm-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>School</th>
+                            <th>Position</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="6" class="loading">
+                                <div class="spinner"></div>
+                                Loading users...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
     <div id="deleteModal" class="modal-overlay">
         <div class="modal">
             <h3>Confirm Deletion</h3>
