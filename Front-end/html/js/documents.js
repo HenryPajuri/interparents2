@@ -182,35 +182,102 @@ switchView(view) {
         container.classList.add(`view-${view}`);
     }
 }
-    async loadDocuments() {
-        try {
-            console.log('📄 Loading documents...');
-            
-            // In a real implementation, this would call your API
-            // For now, we'll use the sample data that's already in the HTML
-            this.documents = this.extractDocumentsFromDOM();
-            
-            console.log(`✅ Loaded ${this.documents.length} documents`);
-        } catch (error) {
-            console.error('❌ Error loading documents:', error);
-            this.showMessage('Error loading documents', 'error');
-        }
-    }
+async loadDocuments() {
+    try {
+        console.log('📄 Loading documents from API...');
+        
+        // Fetch from your existing communications API
+        const response = await fetch(`${this.API_BASE}/communications`, {
+            credentials: 'include'
+        });
 
-    async loadWebinars() {
-        try {
-            console.log('🎥 Loading webinars...');
-            
-            // In a real implementation, this would call your API
-            // For now, we'll use the sample data that's already in the HTML
-            this.webinars = this.extractWebinarsFromDOM();
-            
-            console.log(`✅ Loaded ${this.webinars.length} webinars`);
-        } catch (error) {
-            console.error('❌ Error loading webinars:', error);
-            this.showMessage('Error loading webinars', 'error');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.communications) {
+                // Convert API data to our format
+                this.documents = data.communications.map(comm => ({
+                    id: comm._id,
+                    title: comm.title,
+                    category: comm.category,
+                    description: comm.description,
+                    date: new Date(comm.publishDate).toLocaleDateString(),
+                    size: this.formatFileSize(comm.fileSize),
+                    filename: comm.filename,
+                    uploadedBy: comm.uploadedBy?.name,
+                    type: 'document'
+                }));
+                
+                console.log(`✅ Loaded ${this.documents.length} documents from API`);
+            }
+        } else {
+            throw new Error('Failed to fetch communications');
         }
+    } catch (error) {
+        console.error('❌ Error loading documents:', error);
+        
+        // Fall back to DOM extraction if API fails
+        console.log('📄 Falling back to DOM extraction...');
+        this.documents = this.extractDocumentsFromDOM();
+        
+        this.showMessage('Using cached documents. Some updates may not be visible.', 'warning');
     }
+}
+
+async loadWebinars() {
+    try {
+        console.log('🎥 Loading webinars...');
+        
+        // For now, since you don't have a separate webinars API endpoint,
+        // we'll use sample data. In the future, you can create a separate webinars endpoint.
+        this.webinars = [
+            {
+                id: 'web1',
+                title: 'Understanding European Schools Curriculum',
+                category: 'webinar',
+                description: 'Comprehensive overview of the European Schools curriculum structure and assessment methods.',
+                date: 'March 15, 2024',
+                views: '348 views',
+                duration: '45:30',
+                type: 'webinar'
+            },
+            {
+                id: 'web2',
+                title: 'Effective Parent Representation',
+                category: 'webinar',
+                description: 'Training session on effective advocacy and representation techniques for parent associations.',
+                date: 'February 28, 2024',
+                views: '267 views',
+                duration: '32:15',
+                type: 'webinar'
+            },
+            {
+                id: 'web3',
+                title: 'Digital Learning Initiatives 2024',
+                category: 'presentation',
+                description: 'Presentation on new digital learning policies and technology integration across European Schools.',
+                date: 'January 20, 2024',
+                views: '412 views',
+                duration: '28:45',
+                type: 'webinar'
+            },
+            {
+                id: 'web4',
+                title: 'Student Well-being and Support Systems',
+                category: 'webinar',
+                description: 'Discussion on mental health support, counseling services, and well-being initiatives in European Schools.',
+                date: 'December 12, 2023',
+                views: '589 views',
+                duration: '52:10',
+                type: 'webinar'
+            }
+        ];
+        
+        console.log(`✅ Loaded ${this.webinars.length} webinars`);
+    } catch (error) {
+        console.error('❌ Error loading webinars:', error);
+        this.showMessage('Error loading webinars', 'error');
+    }
+}
 
     extractDocumentsFromDOM() {
         const documentCards = document.querySelectorAll('.document-card');
@@ -304,13 +371,138 @@ switchView(view) {
     }
 
     renderContent() {
-        // Content is already rendered in HTML, this method can be used for dynamic updates
-        console.log('🎨 Content rendered');
+        console.log('🎨 Rendering content...');
         
-        // Add any dynamic enhancements here
+        // Render documents
+        this.renderDocuments();
+        
+        // Render webinars
+        this.renderWebinars();
+        
+        // Add animations
         this.addCardAnimations();
     }
-
+    
+    renderDocuments() {
+        const documentsGrid = document.getElementById('documentsGrid');
+        if (!documentsGrid) return;
+        
+        console.log(`📄 Rendering ${this.documents.length} documents`);
+        
+        if (this.documents.length === 0) {
+            documentsGrid.innerHTML = `
+                <div class="no-content">
+                    <h3>No documents available</h3>
+                    <p>Documents will appear here once uploaded.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        documentsGrid.innerHTML = this.documents.map(doc => `
+            <div class="document-card" data-category="${doc.category.toLowerCase()}">
+                <div class="document-icon">${this.getDocumentIcon(doc.category)}</div>
+                <div class="document-info">
+                    <h3>${doc.title}</h3>
+                    <p class="document-category">${this.getCategoryDisplayName(doc.category)}</p>
+                    <p class="document-description">${doc.description}</p>
+                    <div class="document-meta">
+                        <span class="document-date">📅 Updated: ${doc.date}</span>
+                        <span class="document-size">📊 ${doc.size}</span>
+                    </div>
+                    <div class="document-actions">
+                        <a href="${this.API_BASE.replace('/api', '')}/pdf/${doc.filename}" 
+                           target="_blank" 
+                           class="action-btn primary">📖 View</a>
+                        <a href="${this.API_BASE.replace('/api', '')}/pdf/${doc.filename}" 
+                           download 
+                           class="action-btn secondary">⬇️ Download</a>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        // Re-extract documents for search/filter functionality
+        this.documents = this.documents.map(doc => ({
+            ...doc,
+            element: documentsGrid.querySelector(`[data-category="${doc.category.toLowerCase()}"]`)
+        }));
+    }
+    
+    renderWebinars() {
+        const webinarsGrid = document.getElementById('webinarsGrid');
+        if (!webinarsGrid) return;
+        
+        console.log(`🎥 Rendering ${this.webinars.length} webinars`);
+        
+        if (this.webinars.length === 0) {
+            webinarsGrid.innerHTML = `
+                <div class="no-content">
+                    <h3>No webinars available</h3>
+                    <p>Webinars will appear here once added.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        webinarsGrid.innerHTML = this.webinars.map(webinar => `
+            <div class="webinar-card" data-category="${webinar.category}">
+                <div class="webinar-thumbnail">
+                    <div class="thumbnail-placeholder">
+                        <div class="play-icon">▶️</div>
+                        <span class="duration">${webinar.duration}</span>
+                    </div>
+                </div>
+                <div class="webinar-info">
+                    <h3>${webinar.title}</h3>
+                    <p class="webinar-category">${this.getCategoryDisplayName(webinar.category)}</p>
+                    <p class="webinar-description">${webinar.description}</p>
+                    <div class="webinar-meta">
+                        <span class="webinar-date">📅 Recorded: ${webinar.date}</span>
+                        <span class="webinar-views">👥 ${webinar.views}</span>
+                    </div>
+                    <div class="webinar-actions">
+                        <a href="#" class="action-btn primary">▶️ Watch</a>
+                        <a href="#" class="action-btn secondary">📝 Transcript</a>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        // Re-extract webinars for search/filter functionality
+        this.webinars = this.webinars.map(webinar => ({
+            ...webinar,
+            element: webinarsGrid.querySelector(`[data-category="${webinar.category}"]`)
+        }));
+    }
+    
+    getDocumentIcon(category) {
+        const icons = {
+            'JTC': '📋',
+            'BOG': '🏛️',
+            'Policy': '📜',
+            'Report': '📊',
+            'Memo': '📝',
+            'Other': '📄'
+        };
+        return icons[category] || '📄';
+    }
+    
+    getCategoryDisplayName(category) {
+        const displayNames = {
+            'JTC': 'Joint Teaching Committee',
+            'BOG': 'Board of Governors',
+            'Policy': 'Policy Document',
+            'Report': 'Report',
+            'Memo': 'Memo',
+            'Other': 'Other Document',
+            'webinar': 'Educational Webinar',
+            'training': 'Training Session',
+            'presentation': 'Presentation'
+        };
+        return displayNames[category] || category;
+    }
+    
     addCardAnimations() {
         // Add staggered animation to cards
         const cards = document.querySelectorAll('.document-card, .webinar-card');
@@ -375,54 +567,77 @@ switchView(view) {
         status.className = 'file-status success';
     }
     
-async handleDocumentUpload(e) {
-    e.preventDefault();
-    
-    if (!this.isAuthenticated) {
-        this.showMessage('Please log in to upload documents', 'error');
-        return;
-    }
-
-    console.log('📤 Uploading document...');
-    
-    const formData = new FormData(e.target);
-    
-    
-    // Debug: Log form data
-    for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-    }
-    
-    try {
-        const response = await fetch(`${this.API_BASE}/communications`, {
-            method: 'POST',
-            credentials: 'include',
-            body: formData
-        });
-
-        const data = await response.json();
-        console.log('Server response:', data);
-
-        if (response.ok && data.success) {
-            this.showMessage('Document uploaded successfully!', 'success');
-            this.closeUploadModal();
-            await this.loadDocuments();
-            this.renderContent();
-        } else {
-            // More specific error handling
-            if (data.errors && Array.isArray(data.errors)) {
-                const errorMessages = data.errors.map(err => err.msg).join(', ');
-                this.showMessage(`Validation errors: ${errorMessages}`, 'error');
-            } else {
-                this.showMessage(data.message || 'Upload failed', 'error');
-            }
+    async handleDocumentUpload(e) {
+        e.preventDefault();
+        
+        if (!this.isAuthenticated) {
+            this.showMessage('Please log in to upload documents', 'error');
+            return;
         }
-
-    } catch (error) {
-        console.error('Upload error:', error);
-        this.showMessage('Network error. Please try again.', 'error');
+    
+        console.log('📤 Uploading document...');
+        
+        const formData = new FormData(e.target);
+        
+        // Debug logging
+        console.log('=== FORM DATA DEBUG ===');
+        console.log('Title:', formData.get('title'));
+        console.log('Description:', formData.get('description'));
+        console.log('Category:', formData.get('category'));
+        console.log('Publish Date:', formData.get('publishDate'));
+        const file = formData.get('pdf');
+        if (file) {
+            console.log('File:', file.name, file.type, file.size);
+        } else {
+            console.log('No file found!');
+        }
+        console.log('=== END DEBUG ===');
+        
+        // Show uploading state
+        const uploadBtn = document.getElementById('uploadBtn');
+        const originalText = uploadBtn.textContent;
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Uploading...';
+        
+        try {
+            const response = await fetch(`${this.API_BASE}/communications`, {
+                method: 'POST',
+                credentials: 'include',
+                body: formData
+            });
+    
+            const data = await response.json();
+            console.log('📋 Server response:', data);
+    
+            if (response.ok && data.success) {
+                this.showMessage('Document uploaded successfully!', 'success');
+                this.closeUploadModal();
+                
+                // IMPORTANT: Reload documents from API and re-render
+                console.log('🔄 Refreshing documents list...');
+                await this.loadDocuments();
+                this.renderContent();
+                
+            } else {
+                if (data.errors && Array.isArray(data.errors)) {
+                    const errorMessages = data.errors.map(err => err.msg).join(', ');
+                    this.showMessage(`Validation errors: ${errorMessages}`, 'error');
+                } else {
+                    this.showMessage(data.message || 'Upload failed', 'error');
+                }
+            }
+    
+        } catch (error) {
+            console.error('❌ Upload error:', error);
+            this.showMessage('Network error. Please try again.', 'error');
+        } finally {
+            // Reset button state
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = originalText;
+        }
     }
-}
+    
+    // Also update the webinar upload handler:
     async handleWebinarUpload(e) {
         e.preventDefault();
         
@@ -430,30 +645,55 @@ async handleDocumentUpload(e) {
             this.showMessage('Please log in to add webinars', 'error');
             return;
         }
-
+    
         console.log('🎥 Adding webinar...');
         
         const formData = new FormData(e.target);
         const webinarData = Object.fromEntries(formData.entries());
-
+        
+        // Show uploading state
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Adding...';
+    
         try {
-            // This would be a separate API endpoint for webinars
-            // For now, we'll simulate the upload
+            // For now, simulate the webinar upload since you don't have a webinars API yet
             console.log('Webinar data:', webinarData);
+            
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Add to local webinars array (temporary solution)
+            const newWebinar = {
+                id: 'web-' + Date.now(),
+                title: webinarData.title,
+                category: webinarData.category,
+                description: webinarData.description,
+                date: webinarData.recordingDate ? new Date(webinarData.recordingDate).toLocaleDateString() : new Date().toLocaleDateString(),
+                views: '0 views',
+                duration: webinarData.duration || '00:00',
+                type: 'webinar'
+            };
+            
+            this.webinars.unshift(newWebinar); // Add to beginning of array
             
             this.showMessage('Webinar added successfully!', 'success');
             this.closeWebinarModal();
             
-            // In a real implementation, reload webinars from API
-            await this.loadWebinars();
-            this.renderContent();
-
+            // Re-render webinars
+            this.renderWebinars();
+    
         } catch (error) {
             console.error('Webinar upload error:', error);
             this.showMessage('Network error. Please try again.', 'error');
+        } finally {
+            // Reset button state
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
         }
     }
-
+    
     formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
