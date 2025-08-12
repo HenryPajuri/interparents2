@@ -637,7 +637,6 @@ async loadWebinars() {
         }
     }
     
-    // Also update the webinar upload handler:
     async handleWebinarUpload(e) {
         e.preventDefault();
         
@@ -693,7 +692,7 @@ async loadWebinars() {
             submitBtn.textContent = originalText;
         }
     }
-    
+
     formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -743,6 +742,35 @@ async loadWebinars() {
             }
         }, 5000);
     }
+
+    async testAPIConnection() {
+        console.log('🧪 Testing API connection...');
+        
+        try {
+            const response = await fetch(`${this.API_BASE}/communications`, {
+                credentials: 'include'
+            });
+            
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (data.success && data.communications) {
+                console.log(`✅ Found ${data.communications.length} communications in database`);
+                data.communications.forEach((comm, index) => {
+                    console.log(`${index + 1}. ${comm.title} (${comm.category}) - ${comm.filename}`);
+                });
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('❌ API test failed:', error);
+            return null;
+        }
+    }
+    
 }
 
 // Sample data loader - in production this would come from your API
