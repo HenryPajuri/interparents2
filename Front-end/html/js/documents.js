@@ -167,7 +167,7 @@ class DocumentsManager {
     async loadWebinars() {
         try {
             console.log('🎥 Loading webinars...');
-
+    
             // Load default webinars
             const defaultWebinars = [
                 {
@@ -215,20 +215,30 @@ class DocumentsManager {
                     type: 'webinar'
                 }
             ];
-
+    
             // Load custom webinars from localStorage
             const savedWebinars = JSON.parse(localStorage.getItem('customWebinars') || '[]');
             
-            // Combine default and saved webinars
-            this.webinars = [...savedWebinars, ...defaultWebinars];
-
-            console.log(`✅ Loaded ${this.webinars.length} webinars (${savedWebinars.length} custom + ${defaultWebinars.length} default)`);
+            // Load list of deleted default webinars
+            const deletedDefaults = JSON.parse(localStorage.getItem('deletedDefaultWebinars') || '[]');
+            
+            // Filter out deleted default webinars
+            const activeDefaultWebinars = defaultWebinars.filter(webinar => 
+                !deletedDefaults.includes(webinar.id)
+            );
+            
+            // Combine custom and active default webinars
+            this.webinars = [...savedWebinars, ...activeDefaultWebinars];
+    
+            console.log(`✅ Loaded ${this.webinars.length} webinars (${savedWebinars.length} custom + ${activeDefaultWebinars.length} default)`);
+            if (deletedDefaults.length > 0) {
+                console.log(`🗑️ ${deletedDefaults.length} default webinars have been deleted`);
+            }
         } catch (error) {
             console.error('❌ Error loading webinars:', error);
             this.showMessage('Error loading webinars', 'error');
         }
     }
-
     // Save custom webinars to localStorage
     saveCustomWebinars() {
         try {
@@ -240,6 +250,15 @@ class DocumentsManager {
             console.log(`💾 Saved ${customWebinars.length} custom webinars to localStorage`);
         } catch (error) {
             console.error('❌ Error saving webinars:', error);
+        }
+    }
+
+    saveDeletedDefaults(deletedIds) {
+        try {
+            localStorage.setItem('deletedDefaultWebinars', JSON.stringify(deletedIds));
+            console.log(`💾 Saved ${deletedIds.length} deleted default webinar IDs to localStorage`);
+        } catch (error) {
+            console.error('❌ Error saving deleted defaults:', error);
         }
     }
 
@@ -714,22 +733,34 @@ class DocumentsManager {
         }
     }
 
-    deleteWebinar(webinarId, title) {
-        if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
-            return;
-        }
-
-        console.log('🗑️ Deleting webinar:', webinarId);
-
-        // Remove from local array
-        this.webinars = this.webinars.filter(w => w.id !== webinarId);
-        
-        // Save updated list to localStorage
-        this.saveCustomWebinars();
-
-        this.showMessage(`"${title}" deleted successfully`, 'success');
-        this.renderWebinars();
+deleteWebinar(webinarId, title) {
+    if (!confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+        return;
     }
+
+    console.log('🗑️ Deleting webinar:', webinarId);
+
+    const defaultIds = ['web1', 'web2', 'web3', 'web4'];
+    
+    // Check if this is a default webinar
+    if (defaultIds.includes(webinarId)) {
+        // Add to deleted defaults list
+        const deletedDefaults = JSON.parse(localStorage.getItem('deletedDefaultWebinars') || '[]');
+        if (!deletedDefaults.includes(webinarId)) {
+            deletedDefaults.push(webinarId);
+            this.saveDeletedDefaults(deletedDefaults);
+        }
+    }
+
+    // Remove from local array
+    this.webinars = this.webinars.filter(w => w.id !== webinarId);
+    
+    // Save updated custom webinars list
+    this.saveCustomWebinars();
+
+    this.showMessage(`"${title}" deleted successfully`, 'success');
+    this.renderWebinars();
+}
 
     // Modal methods
     showDocumentModal(url, title) {
