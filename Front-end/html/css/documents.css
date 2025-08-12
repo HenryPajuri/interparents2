@@ -850,3 +850,305 @@
     transform: none !important;
     box-shadow: none !important;
 }
+
+
+/* Enhanced Document and Webinar Cards */
+.document-meta .document-author,
+.webinar-meta .webinar-views {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+}
+
+/* Enhanced Action Buttons */
+.action-btn {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 90px;
+    justify-content: center;
+    text-align: center;
+}
+
+.action-btn.primary {
+    background: #27ae60;
+    color: white;
+}
+
+.action-btn.primary:hover {
+    background: #229954;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+}
+
+.action-btn.secondary {
+    background: #3498db;
+    color: white;
+}
+
+.action-btn.secondary:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+}
+
+.action-btn.danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.action-btn.danger:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+}
+
+.action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Enhanced Webinar Thumbnails */
+.webinar-thumbnail {
+    position: relative;
+    height: 200px;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.webinar-thumbnail::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.webinar-card:hover .webinar-thumbnail::before {
+    transform: translateX(100%);
+}
+
+.play-icon {
+    font-size: 3rem;
+    color: white;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 2;
+    position: relative;
+}
+
+.webinar-card:hover .play-icon {
+    transform: scale(1.2);
+    text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* Document Viewer Modal */
+.document-viewer-modal {
+    max-width: 90vw;
+    max-height: 90vh;
+    width: 1000px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e8ecef;
+    margin-bottom: 1rem;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2c3e50;
+    flex: 1;
+}
+
+.close-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease;
+}
+
+.close-btn:hover {
+    background: #c0392b;
+}
+
+.modal-content {
+    margin-bottom: 1.5rem;
+}
+
+/* Webinar Player Modal */
+.webinar-player-modal {
+    max-width: 800px;
+    width: 90%;
+}
+
+.demo-video-placeholder {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: white;
+    padding: 3rem;
+    border-radius: 12px;
+    text-align: center;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.demo-video-content {
+    max-width: 400px;
+}
+
+.play-icon-large {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.demo-video-content h4 {
+    color: white;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.demo-video-content p {
+    color: rgba(255,255,255,0.9);
+    line-height: 1.6;
+    margin-bottom: 0.8rem;
+}
+
+.demo-video-content p:last-child {
+    font-style: italic;
+    opacity: 0.8;
+    font-size: 0.9rem;
+    margin-top: 1.5rem;
+}
+
+/* Enhanced Modal Animations */
+.modal-overlay {
+    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.modal-overlay.show .modal {
+    animation: modalSlideIn 0.4s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Loading states for buttons */
+.action-btn.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.action-btn.loading::after {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 0.5rem;
+}
+
+/* Enhanced hover effects for cards */
+.document-card:hover,
+.webinar-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.document-card:hover .action-btn,
+.webinar-card:hover .action-btn {
+    transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .document-viewer-modal,
+    .webinar-player-modal {
+        margin: 1rem;
+        max-width: calc(100vw - 2rem);
+        max-height: calc(100vh - 2rem);
+    }
+    
+    .document-viewer-modal iframe {
+        height: 50vh !important;
+    }
+    
+    .action-btn {
+        min-width: 70px;
+        font-size: 0.8rem;
+        padding: 0.5rem 0.8rem;
+    }
+    
+    .demo-video-placeholder {
+        padding: 2rem 1rem;
+        min-height: 250px;
+    }
+    
+    .play-icon-large {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .document-actions,
+    .webinar-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .action-btn {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-cancel,
+    .btn-confirm {
+        width: 100%;
+    }
+}
