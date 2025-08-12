@@ -101,7 +101,6 @@ class DocumentsManager {
             window.location.href = 'login.html';
         }
     }
-    // Replace your bindEvents method with this updated version:
 
     bindEvents() {
         // Search functionality
@@ -164,14 +163,13 @@ class DocumentsManager {
         });
     }
 
-    // Update your loadWebinars method with sample video URLs:
-
+    // Load webinars from localStorage and merge with default data
     async loadWebinars() {
         try {
             console.log('🎥 Loading webinars...');
 
-            // Enhanced sample data with video URLs
-            this.webinars = [
+            // Load default webinars
+            const defaultWebinars = [
                 {
                     id: 'web1',
                     title: 'Understanding European Schools Curriculum',
@@ -180,7 +178,7 @@ class DocumentsManager {
                     date: 'March 15, 2024',
                     views: '348 views',
                     duration: '45:30',
-                    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Sample YouTube URL
+                    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
                     type: 'webinar'
                 },
                 {
@@ -191,7 +189,7 @@ class DocumentsManager {
                     date: 'February 28, 2024',
                     views: '267 views',
                     duration: '32:15',
-                    videoUrl: 'https://vimeo.com/123456789', // Sample Vimeo URL
+                    videoUrl: 'https://vimeo.com/123456789',
                     type: 'webinar'
                 },
                 {
@@ -213,19 +211,37 @@ class DocumentsManager {
                     date: 'December 12, 2023',
                     views: '589 views',
                     duration: '52:10',
-                    videoUrl: '#', // No URL - will show demo modal
+                    videoUrl: '#',
                     type: 'webinar'
                 }
             ];
 
-            console.log(`✅ Loaded ${this.webinars.length} webinars`);
+            // Load custom webinars from localStorage
+            const savedWebinars = JSON.parse(localStorage.getItem('customWebinars') || '[]');
+            
+            // Combine default and saved webinars
+            this.webinars = [...savedWebinars, ...defaultWebinars];
+
+            console.log(`✅ Loaded ${this.webinars.length} webinars (${savedWebinars.length} custom + ${defaultWebinars.length} default)`);
         } catch (error) {
             console.error('❌ Error loading webinars:', error);
             this.showMessage('Error loading webinars', 'error');
         }
     }
 
-    // Enhanced handleWebinarUpload to include video URL:
+    // Save custom webinars to localStorage
+    saveCustomWebinars() {
+        try {
+            // Filter out default webinars (those with predefined IDs)
+            const defaultIds = ['web1', 'web2', 'web3', 'web4'];
+            const customWebinars = this.webinars.filter(webinar => !defaultIds.includes(webinar.id));
+            
+            localStorage.setItem('customWebinars', JSON.stringify(customWebinars));
+            console.log(`💾 Saved ${customWebinars.length} custom webinars to localStorage`);
+        } catch (error) {
+            console.error('❌ Error saving webinars:', error);
+        }
+    }
 
     async handleWebinarUpload(e) {
         e.preventDefault();
@@ -243,8 +259,7 @@ class DocumentsManager {
         // Show uploading state
         const submitBtn = e.target.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Adding...';
+        this.setButtonLoading(submitBtn, true, 'Adding...');
 
         try {
             console.log('Webinar data:', webinarData);
@@ -252,9 +267,9 @@ class DocumentsManager {
             // Simulate API delay
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Add to local webinars array (temporary solution)
+            // Create new webinar object
             const newWebinar = {
-                id: 'web-' + Date.now(),
+                id: 'custom-' + Date.now(),
                 title: webinarData.title,
                 category: webinarData.category,
                 description: webinarData.description,
@@ -265,7 +280,11 @@ class DocumentsManager {
                 type: 'webinar'
             };
 
-            this.webinars.unshift(newWebinar); // Add to beginning of array
+            // Add to beginning of array
+            this.webinars.unshift(newWebinar);
+            
+            // Save to localStorage
+            this.saveCustomWebinars();
 
             this.showMessage('Webinar added successfully!', 'success');
             this.closeWebinarModal();
@@ -277,14 +296,12 @@ class DocumentsManager {
             console.error('Webinar upload error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         } finally {
-            // Reset button state
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
+            // Reset loading state
+            this.setButtonLoading(submitBtn, false);
         }
     }
 
-    // Add utility method for button loading states:
-
+    // Utility method for button loading states
     setButtonLoading(button, loading, loadingText = 'Loading...') {
         if (loading) {
             button.dataset.originalText = button.textContent;
@@ -324,6 +341,7 @@ class DocumentsManager {
             container.classList.add(`view-${view}`);
         }
     }
+
     async loadDocuments() {
         try {
             console.log('📄 Loading documents from API...');
@@ -365,62 +383,6 @@ class DocumentsManager {
         }
     }
 
-    async loadWebinars() {
-        try {
-            console.log('🎥 Loading webinars...');
-
-            // For now, since you don't have a separate webinars API endpoint,
-            // we'll use sample data. In the future, you can create a separate webinars endpoint.
-            this.webinars = [
-                {
-                    id: 'web1',
-                    title: 'Understanding European Schools Curriculum',
-                    category: 'webinar',
-                    description: 'Comprehensive overview of the European Schools curriculum structure and assessment methods.',
-                    date: 'March 15, 2024',
-                    views: '348 views',
-                    duration: '45:30',
-                    type: 'webinar'
-                },
-                {
-                    id: 'web2',
-                    title: 'Effective Parent Representation',
-                    category: 'webinar',
-                    description: 'Training session on effective advocacy and representation techniques for parent associations.',
-                    date: 'February 28, 2024',
-                    views: '267 views',
-                    duration: '32:15',
-                    type: 'webinar'
-                },
-                {
-                    id: 'web3',
-                    title: 'Digital Learning Initiatives 2024',
-                    category: 'presentation',
-                    description: 'Presentation on new digital learning policies and technology integration across European Schools.',
-                    date: 'January 20, 2024',
-                    views: '412 views',
-                    duration: '28:45',
-                    type: 'webinar'
-                },
-                {
-                    id: 'web4',
-                    title: 'Student Well-being and Support Systems',
-                    category: 'webinar',
-                    description: 'Discussion on mental health support, counseling services, and well-being initiatives in European Schools.',
-                    date: 'December 12, 2023',
-                    views: '589 views',
-                    duration: '52:10',
-                    type: 'webinar'
-                }
-            ];
-
-            console.log(`✅ Loaded ${this.webinars.length} webinars`);
-        } catch (error) {
-            console.error('❌ Error loading webinars:', error);
-            this.showMessage('Error loading webinars', 'error');
-        }
-    }
-
     extractDocumentsFromDOM() {
         const documentCards = document.querySelectorAll('.document-card');
         return Array.from(documentCards).map(card => ({
@@ -435,21 +397,6 @@ class DocumentsManager {
         }));
     }
 
-    extractWebinarsFromDOM() {
-        const webinarCards = document.querySelectorAll('.webinar-card');
-        return Array.from(webinarCards).map(card => ({
-            id: Math.random().toString(36).substr(2, 9),
-            title: card.querySelector('h3').textContent,
-            category: card.dataset.category,
-            description: card.querySelector('.webinar-description').textContent,
-            date: card.querySelector('.webinar-date').textContent.replace('📅 Recorded: ', ''),
-            views: card.querySelector('.webinar-views').textContent.replace('👥 ', ''),
-            duration: card.querySelector('.duration').textContent,
-            type: 'webinar',
-            element: card
-        }));
-    }
-
     handleSearch(searchTerm) {
         console.log('🔍 Searching for:', searchTerm);
 
@@ -458,7 +405,7 @@ class DocumentsManager {
         if (!searchTerm.trim()) {
             // Show all items
             allItems.forEach(item => {
-                item.element.style.display = 'block';
+                if (item.element) item.element.style.display = 'block';
             });
             return;
         }
@@ -471,7 +418,9 @@ class DocumentsManager {
                 item.description.toLowerCase().includes(searchLower) ||
                 item.category.toLowerCase().includes(searchLower);
 
-            item.element.style.display = matchesSearch ? 'block' : 'none';
+            if (item.element) {
+                item.element.style.display = matchesSearch ? 'block' : 'none';
+            }
         });
     }
 
@@ -483,7 +432,7 @@ class DocumentsManager {
         if (category === 'all') {
             // Show all items
             allItems.forEach(item => {
-                item.element.style.display = 'block';
+                if (item.element) item.element.style.display = 'block';
             });
             return;
         }
@@ -493,23 +442,10 @@ class DocumentsManager {
                 (category === 'webinar' && item.type === 'webinar') ||
                 (category === 'presentation' && item.category === 'presentation');
 
-            item.element.style.display = matchesCategory ? 'block' : 'none';
+            if (item.element) {
+                item.element.style.display = matchesCategory ? 'block' : 'none';
+            }
         });
-    }
-
-    switchView(view) {
-        console.log('👀 Switching to view:', view);
-
-        this.currentView = view;
-
-        // Update button states
-        document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`[data-view="${view}"]`).classList.add('active');
-
-        // Update container classes
-        const container = document.querySelector('.main-content');
-        container.classList.remove('view-grid', 'view-list');
-        container.classList.add(`view-${view}`);
     }
 
     renderContent() {
@@ -524,7 +460,6 @@ class DocumentsManager {
         // Add animations
         this.addCardAnimations();
     }
-
 
     renderDocuments() {
         const documentsGrid = document.getElementById('documentsGrid');
@@ -597,6 +532,7 @@ class DocumentsManager {
             return;
         }
 
+        // REMOVED TRANSCRIPT BUTTON FROM HERE
         webinarsGrid.innerHTML = this.webinars.map((webinar, index) => `
         <div class="webinar-card" data-category="${webinar.category}" data-webinar-id="${webinar.id}">
             <div class="webinar-thumbnail">
@@ -616,9 +552,6 @@ class DocumentsManager {
                 <div class="webinar-actions">
                     <button class="action-btn primary watch-webinar-btn" data-webinar-id="${webinar.id}" data-title="${webinar.title}" data-url="${webinar.videoUrl || '#'}">
                         ▶️ Watch
-                    </button>
-                    <button class="action-btn secondary transcript-btn" data-webinar-id="${webinar.id}" data-title="${webinar.title}">
-                        📝 Transcript
                     </button>
                     ${this.isAuthenticated && (this.currentUser.role === 'admin' || this.currentUser.role === 'executive') ? `
                         <button class="action-btn danger delete-webinar-btn" data-webinar-id="${webinar.id}" data-title="${webinar.title}">
@@ -670,7 +603,7 @@ class DocumentsManager {
         });
     }
 
-    // New method to bind webinar action buttons
+    // UPDATED: Removed transcript button binding
     bindWebinarActions() {
         // Watch webinar buttons (including play icons)
         document.querySelectorAll('.watch-webinar-btn, .play-icon').forEach(btn => {
@@ -680,15 +613,6 @@ class DocumentsManager {
                 if (webinar) {
                     this.watchWebinar(webinar);
                 }
-            });
-        });
-
-        // Transcript buttons
-        document.querySelectorAll('.transcript-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const webinarId = e.target.dataset.webinarId;
-                const title = e.target.dataset.title;
-                this.viewTranscript(webinarId, title);
             });
         });
 
@@ -768,29 +692,26 @@ class DocumentsManager {
         }
     }
 
-    // Webinar action methods
+    // UPDATED: Fixed video URL opening
     watchWebinar(webinar) {
         console.log('▶️ Watching webinar:', webinar.title);
+        console.log('Video URL:', webinar.videoUrl);
 
-        if (webinar.videoUrl && webinar.videoUrl !== '#') {
+        if (webinar.videoUrl && webinar.videoUrl !== '#' && webinar.videoUrl.trim() !== '') {
             // If we have a real video URL, open it
-            window.open(webinar.videoUrl, '_blank');
-            this.showMessage(`Opening "${webinar.title}"`, 'info');
+            console.log('Opening video URL:', webinar.videoUrl);
+            const newWindow = window.open(webinar.videoUrl, '_blank');
+            
+            if (newWindow) {
+                this.showMessage(`Opening "${webinar.title}"`, 'info');
+            } else {
+                this.showMessage('Please allow popups to open video links', 'warning');
+            }
         } else {
             // Show demo video modal
+            console.log('No valid URL, showing demo modal');
             this.showWebinarModal(webinar);
         }
-    }
-
-    viewTranscript(webinarId, title) {
-        console.log('📝 Viewing transcript for:', title);
-
-        // For now, show a placeholder message
-        // In a real implementation, you would fetch the transcript from your API
-        this.showMessage(`Transcript for "${title}" - Feature coming soon!`, 'info');
-
-        // Alternative: could open a modal with transcript content
-        // this.showTranscriptModal(webinarId, title);
     }
 
     deleteWebinar(webinarId, title) {
@@ -800,8 +721,11 @@ class DocumentsManager {
 
         console.log('🗑️ Deleting webinar:', webinarId);
 
-        // Remove from local array (since webinars are currently stored locally)
+        // Remove from local array
         this.webinars = this.webinars.filter(w => w.id !== webinarId);
+        
+        // Save updated list to localStorage
+        this.saveCustomWebinars();
 
         this.showMessage(`"${title}" deleted successfully`, 'success');
         this.renderWebinars();
@@ -963,20 +887,6 @@ class DocumentsManager {
 
         const formData = new FormData(e.target);
 
-        // Debug logging
-        console.log('=== FORM DATA DEBUG ===');
-        console.log('Title:', formData.get('title'));
-        console.log('Description:', formData.get('description'));
-        console.log('Category:', formData.get('category'));
-        console.log('Publish Date:', formData.get('publishDate'));
-        const file = formData.get('pdf');
-        if (file) {
-            console.log('File:', file.name, file.type, file.size);
-        } else {
-            console.log('No file found!');
-        }
-        console.log('=== END DEBUG ===');
-
         // Show uploading state
         const uploadBtn = document.getElementById('uploadBtn');
         const originalText = uploadBtn.textContent;
@@ -991,14 +901,12 @@ class DocumentsManager {
             });
 
             const data = await response.json();
-            console.log('📋 Server response:', data);
 
             if (response.ok && data.success) {
                 this.showMessage('Document uploaded successfully!', 'success');
                 this.closeUploadModal();
 
-                // IMPORTANT: Reload documents from API and re-render
-                console.log('🔄 Refreshing documents list...');
+                // Reload documents from API and re-render
                 await this.loadDocuments();
                 this.renderContent();
 
@@ -1018,62 +926,6 @@ class DocumentsManager {
             // Reset button state
             uploadBtn.disabled = false;
             uploadBtn.textContent = originalText;
-        }
-    }
-
-    async handleWebinarUpload(e) {
-        e.preventDefault();
-
-        if (!this.isAuthenticated) {
-            this.showMessage('Please log in to add webinars', 'error');
-            return;
-        }
-
-        console.log('🎥 Adding webinar...');
-
-        const formData = new FormData(e.target);
-        const webinarData = Object.fromEntries(formData.entries());
-
-        // Show uploading state
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Adding...';
-
-        try {
-            // For now, simulate the webinar upload since you don't have a webinars API yet
-            console.log('Webinar data:', webinarData);
-
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Add to local webinars array (temporary solution)
-            const newWebinar = {
-                id: 'web-' + Date.now(),
-                title: webinarData.title,
-                category: webinarData.category,
-                description: webinarData.description,
-                date: webinarData.recordingDate ? new Date(webinarData.recordingDate).toLocaleDateString() : new Date().toLocaleDateString(),
-                views: '0 views',
-                duration: webinarData.duration || '00:00',
-                type: 'webinar'
-            };
-
-            this.webinars.unshift(newWebinar); // Add to beginning of array
-
-            this.showMessage('Webinar added successfully!', 'success');
-            this.closeWebinarModal();
-
-            // Re-render webinars
-            this.renderWebinars();
-
-        } catch (error) {
-            console.error('Webinar upload error:', error);
-            this.showMessage('Network error. Please try again.', 'error');
-        } finally {
-            // Reset button state
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
         }
     }
 
@@ -1126,96 +978,6 @@ class DocumentsManager {
             }
         }, 5000);
     }
-
-    async testAPIConnection() {
-        console.log('🧪 Testing API connection...');
-
-        try {
-            const response = await fetch(`${this.API_BASE}/communications`, {
-                credentials: 'include'
-            });
-
-            console.log('Response status:', response.status);
-            console.log('Response ok:', response.ok);
-
-            const data = await response.json();
-            console.log('Response data:', data);
-
-            if (data.success && data.communications) {
-                console.log(`✅ Found ${data.communications.length} communications in database`);
-                data.communications.forEach((comm, index) => {
-                    console.log(`${index + 1}. ${comm.title} (${comm.category}) - ${comm.filename}`);
-                });
-            }
-
-            return data;
-        } catch (error) {
-            console.error('❌ API test failed:', error);
-            return null;
-        }
-    }
-
-}
-
-
-// Sample data loader - in production this would come from your API
-class DocumentsSampleDataLoader {
-    static loadSampleDocuments() {
-        return [
-            {
-                id: 'doc1',
-                title: 'INTERPARENTS Statutes 2024',
-                category: 'policy',
-                description: 'Updated organizational statutes and governance framework for INTERPARENTS operations.',
-                date: 'March 2024',
-                size: '2.3 MB',
-                type: 'document'
-            },
-            {
-                id: 'doc2',
-                title: 'Parent Representative Guidelines',
-                category: 'guidelines',
-                description: 'Comprehensive guide for parent representatives in European Schools governance.',
-                date: 'January 2024',
-                size: '1.8 MB',
-                type: 'document'
-            },
-            {
-                id: 'doc3',
-                title: 'Committee Participation Handbook',
-                category: 'training',
-                description: 'Training materials for effective participation in JTC and BOG committees.',
-                date: 'February 2024',
-                size: '3.1 MB',
-                type: 'document'
-            }
-        ];
-    }
-
-    static loadSampleWebinars() {
-        return [
-            {
-                id: 'web1',
-                title: 'Understanding European Schools Curriculum',
-                category: 'webinar',
-                description: 'Comprehensive overview of the European Schools curriculum structure and assessment methods.',
-                date: 'March 15, 2024',
-                views: '348 views',
-                duration: '45:30',
-                type: 'webinar'
-            },
-            {
-                id: 'web2',
-                title: 'Effective Parent Representation',
-                category: 'webinar',
-                description: 'Training session on effective advocacy and representation techniques for parent associations.',
-                date: 'February 28, 2024',
-                views: '267 views',
-                duration: '32:15',
-                type: 'webinar'
-            }
-        ];
-    }
 }
 
 // Global functions for modal management
@@ -1256,4 +1018,3 @@ document.addEventListener('DOMContentLoaded', () => {
         document.head.appendChild(style);
     }
 });
-
