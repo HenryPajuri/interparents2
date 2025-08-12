@@ -305,57 +305,57 @@
     </div>
 
     <!-- Upload Document Modal -->
-    <div id="uploadModal" class="modal-overlay">
-        <div class="modal">
-            <h3 id="modalTitle">Upload Document</h3>
-            <form id="uploadForm" enctype="multipart/form-data">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="documentTitle">Title *</label>
-                        <input type="text" id="documentTitle" name="title" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="documentCategory">Category *</label>
-                        <select id="documentCategory" name="category" required>
-                            <option value="">Select Category</option>
-                            <option value="policy">Policy Document</option>
-                            <option value="guidelines">Guidelines</option>
-                            <option value="reports">Reports</option>
-                            <option value="training">Training Materials</option>
-                            <option value="presentation">Presentations</option>
-                        </select>
-                    </div>
-                </div>
-
+   <!-- Replace the Upload Document Modal in your documents.html with this fixed version -->
+<div id="uploadModal" class="modal-overlay">
+    <div class="modal">
+        <h3 id="modalTitle">Upload Document</h3>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="form-row">
                 <div class="form-group">
-                    <label for="documentDescription">Description *</label>
-                    <textarea id="documentDescription" name="description" required
-                        placeholder="Brief description of the document..."></textarea>
+                    <label for="documentTitle">Title *</label>
+                    <input type="text" id="documentTitle" name="title" required>
                 </div>
+                <div class="form-group">
+                    <label for="documentCategory">Category *</label>
+                    <select id="documentCategory" name="category" required>
+                        <option value="">Select Category</option>
+                        <option value="JTC">Joint Teaching Committee</option>
+                        <option value="BOG">Board of Governors</option>
+                        <option value="Policy">Policy Document</option>
+                        <option value="Report">Report</option>
+                        <option value="Memo">Memo</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="documentDate">Publication Date</label>
-                        <input type="date" id="documentDate" name="publishDate">
-                    </div>
-                    <div class="form-group">
-                        <label>File *</label>
-                        <label for="documentFile" class="file-input">
-                            <input type="file" id="documentFile" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx"
-                                required>
-                            Choose File
-                        </label>
-                        <div id="fileStatus" class="file-status" style="display: none;"></div>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label for="documentDescription">Description *</label>
+                <textarea id="documentDescription" name="description" required placeholder="Brief description of the document..."></textarea>
+            </div>
 
-                <div class="modal-buttons">
-                    <button type="button" class="btn-cancel" onclick="closeUploadModal()">Cancel</button>
-                    <button type="submit" class="btn-confirm" id="uploadBtn">Upload Document</button>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="documentDate">Publication Date</label>
+                    <input type="date" id="documentDate" name="publishDate">
                 </div>
-            </form>
-        </div>
+                <div class="form-group">
+                    <label>PDF File *</label>
+                    <label for="documentFile" class="file-input">
+                        <input type="file" id="documentFile" name="pdf" accept=".pdf" required>
+                        Choose PDF File
+                    </label>
+                    <div id="fileStatus" class="file-status" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" class="btn-cancel" onclick="closeUploadModal()">Cancel</button>
+                <button type="submit" class="btn-confirm" id="uploadBtn">Upload Document</button>
+            </div>
+        </form>
     </div>
+</div>
 
     <!-- Webinar Modal -->
     <div id="webinarModal" class="modal-overlay">

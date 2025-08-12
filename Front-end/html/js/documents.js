@@ -101,63 +101,60 @@ class DocumentsManager {
             window.location.href = 'login.html';
         }
     }
-
-    // Updated bindEvents method - replace the view controls section in your documents.js
-
-bindEvents() {
-    // Search functionality
-    const globalSearch = document.getElementById('globalSearch');
-    if (globalSearch) {
-        globalSearch.addEventListener('input', (e) => this.handleSearch(e.target.value));
-    }
-
-    // Category filter
-    const categoryFilter = document.getElementById('categoryFilter');
-    if (categoryFilter) {
-        categoryFilter.addEventListener('change', (e) => this.handleFilter(e.target.value));
-    }
-
-    // View controls - Updated to be more robust
-    document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            // Make sure we get the button element, not a child element
-            const button = e.target.closest('.view-btn');
-            if (button && button.dataset.view) {
-                this.switchView(button.dataset.view);
-            }
+    bindEvents() {
+        // Search functionality
+        const globalSearch = document.getElementById('globalSearch');
+        if (globalSearch) {
+            globalSearch.addEventListener('input', (e) => this.handleSearch(e.target.value));
+        }
+    
+        // Category filter
+        const categoryFilter = document.getElementById('categoryFilter');
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', (e) => this.handleFilter(e.target.value));
+        }
+    
+        // View controls
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const button = e.target.closest('.view-btn');
+                if (button && button.dataset.view) {
+                    this.switchView(button.dataset.view);
+                }
+            });
         });
-    });
-
-    // Upload buttons
-    const uploadDocumentBtn = document.getElementById('uploadDocumentBtn');
-    const uploadWebinarBtn = document.getElementById('uploadWebinarBtn');
     
-    if (uploadDocumentBtn) {
-        uploadDocumentBtn.addEventListener('click', () => this.openUploadModal('document'));
+        // Upload buttons
+        const uploadDocumentBtn = document.getElementById('uploadDocumentBtn');
+        const uploadWebinarBtn = document.getElementById('uploadWebinarBtn');
+        
+        if (uploadDocumentBtn) {
+            uploadDocumentBtn.addEventListener('click', () => this.openUploadModal('document'));
+        }
+        
+        if (uploadWebinarBtn) {
+            uploadWebinarBtn.addEventListener('click', () => this.openUploadModal('webinar'));
+        }
+    
+        // Form submissions
+        const uploadForm = document.getElementById('uploadForm');
+        const webinarForm = document.getElementById('webinarForm');
+        
+        if (uploadForm) {
+            uploadForm.addEventListener('submit', (e) => this.handleDocumentUpload(e));
+        }
+        
+        if (webinarForm) {
+            webinarForm.addEventListener('submit', (e) => this.handleWebinarUpload(e));
+        }
+    
+        // File input change - CORRECTED field name
+        const documentFile = document.getElementById('documentFile');
+        if (documentFile) {
+            documentFile.addEventListener('change', (e) => this.handleFileChange(e));
+        }
     }
     
-    if (uploadWebinarBtn) {
-        uploadWebinarBtn.addEventListener('click', () => this.openUploadModal('webinar'));
-    }
-
-    // Form submissions
-    const uploadForm = document.getElementById('uploadForm');
-    const webinarForm = document.getElementById('webinarForm');
-    
-    if (uploadForm) {
-        uploadForm.addEventListener('submit', (e) => this.handleDocumentUpload(e));
-    }
-    
-    if (webinarForm) {
-        webinarForm.addEventListener('submit', (e) => this.handleWebinarUpload(e));
-    }
-
-    // File input change
-    const documentFile = document.getElementById('documentFile');
-    if (documentFile) {
-        documentFile.addEventListener('change', (e) => this.handleFileChange(e));
-    }
-}
 
 // Updated switchView method to be more robust
 switchView(view) {
@@ -352,77 +349,80 @@ switchView(view) {
     handleFileChange(e) {
         const file = e.target.files[0];
         const status = document.getElementById('fileStatus');
-
+    
         if (!file) {
             status.style.display = 'none';
             return;
         }
-
+    
         status.style.display = 'block';
-
-        // Check file type
-        const allowedTypes = [
-            'application/pdf',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-powerpoint',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-        ];
-
-        if (!allowedTypes.includes(file.type)) {
-            status.textContent = 'Please select a valid file (PDF, DOC, DOCX, PPT, PPTX)';
+    
+        // Backend only accepts PDF files for communications
+        if (file.type !== 'application/pdf') {
+            status.textContent = 'Please select a PDF file only';
             status.className = 'file-status error';
             return;
         }
-
+    
         // Check file size (10MB limit)
         if (file.size > 10 * 1024 * 1024) {
             status.textContent = 'File size must be less than 10MB';
             status.className = 'file-status error';
             return;
         }
-
+    
         status.textContent = `Selected: ${file.name} (${this.formatFileSize(file.size)})`;
         status.className = 'file-status success';
     }
+    
+async handleDocumentUpload(e) {
+    e.preventDefault();
+    
+    if (!this.isAuthenticated) {
+        this.showMessage('Please log in to upload documents', 'error');
+        return;
+    }
 
-    async handleDocumentUpload(e) {
-        e.preventDefault();
-        
-        if (!this.isAuthenticated) {
-            this.showMessage('Please log in to upload documents', 'error');
-            return;
-        }
+    console.log('📤 Uploading document...');
+    
+    const formData = new FormData(e.target);
+    
+    
+    // Debug: Log form data
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+    }
+    
+    try {
+        const response = await fetch(`${this.API_BASE}/communications`, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
 
-        console.log('📤 Uploading document...');
-        
-        const formData = new FormData(e.target);
-        
-        try {
-            // This would integrate with your existing communications API
-            const response = await fetch(`${this.API_BASE}/communications`, {
-                method: 'POST',
-                credentials: 'include',
-                body: formData
-            });
+        const data = await response.json();
+        console.log('Server response:', data);
 
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                this.showMessage('Document uploaded successfully!', 'success');
-                this.closeUploadModal();
-                await this.loadDocuments();
-                this.renderContent();
+        if (response.ok && data.success) {
+            this.showMessage('Document uploaded successfully!', 'success');
+            this.closeUploadModal();
+            await this.loadDocuments();
+            this.renderContent();
+        } else {
+            // More specific error handling
+            if (data.errors && Array.isArray(data.errors)) {
+                const errorMessages = data.errors.map(err => err.msg).join(', ');
+                this.showMessage(`Validation errors: ${errorMessages}`, 'error');
             } else {
                 this.showMessage(data.message || 'Upload failed', 'error');
             }
-
-        } catch (error) {
-            console.error('Upload error:', error);
-            this.showMessage('Network error. Please try again.', 'error');
         }
-    }
 
+    } catch (error) {
+        console.error('Upload error:', error);
+        this.showMessage('Network error. Please try again.', 'error');
+    }
+}
     async handleWebinarUpload(e) {
         e.preventDefault();
         
@@ -603,3 +603,4 @@ document.addEventListener('DOMContentLoaded', () => {
         document.head.appendChild(style);
     }
 });
+
