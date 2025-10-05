@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Test</title>
+    <style>
+        img {
+            width: 200px;
+            height: 200px;
+            border: 2px solid red;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Path Test</h1>
+
+    <h2>Reet Escribano</h2>
+    <img src="../images/Reet.jpg" alt="Reet">
+    <p>Path: ../images/Reet.jpg</p>
+
+    <h2>Chrysoula Fragkiadaki</h2>
+    <img src="../images/Chrysoula.jpg" alt="Chrysoula">
+    <p>Path: ../images/Chrysoula.jpg</p>
+
+    <hr>
+
+    <h2>Debug Info</h2>
+    <p>Current page location: <script>document.write(window.location.href);</script></p>
+    <p>Images should be at: <script>document.write(window.location.href.replace('test-images.html', '../images/'));</script></p>
+</body>
+</html>
