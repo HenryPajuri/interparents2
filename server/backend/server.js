@@ -457,7 +457,7 @@ app.post('/api/events', [
         const event = new Event({
             title,
             type,
-            date: new Date(date),
+            date: date,
             time,
             location,
             description,
@@ -546,7 +546,7 @@ app.put('/api/events/:id', [
         
         if (title !== undefined) event.title = title;
         if (type !== undefined) event.type = type;
-        if (date !== undefined) event.date = new Date(date);
+        if (date !== undefined) event.date = date;
         if (time !== undefined) event.time = time;
         if (location !== undefined) event.location = location;
         if (description !== undefined) event.description = description;
