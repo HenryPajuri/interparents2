@@ -103,6 +103,14 @@
     transition: transform 0.3s ease, box-shadow 0.3s ease !important;
     display: block !important;
     margin: 0 auto !important;
+    background-color: #f0f0f0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Hide avatar placeholder when img exists */
+.member-image:has(img) .avatar-placeholder {
+    display: none !important;
 }
 
 .member-profile:hover .member-image img {
