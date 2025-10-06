@@ -81,6 +81,8 @@
     box-shadow: 0 8px 25px rgba(0,0,0,0.08);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     border: 1px solid #e8ecef;
+    display: flex;
+    flex-direction: column;
 }
 
 .member-profile:hover {
@@ -257,6 +259,7 @@
     border-radius: 6px;
     text-align: center;
     border-left: 3px solid #3498db;
+    margin-top: auto;
 }
 
 .member-contact span {
