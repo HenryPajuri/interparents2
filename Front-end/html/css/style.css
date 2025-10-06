@@ -139,7 +139,7 @@ nav a:hover {
     position: absolute;
     top: 100%;
     left: 0;
-    background: linear-gradient(135deg, rgba(44, 62, 80, 0.98) 0%, rgba(52, 152, 219, 0.98) 100%);
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.98) 0%, rgba(44, 62, 80, 0.98) 100%);
     backdrop-filter: blur(10px);
     min-width: 320px;
     width: max-content;
@@ -183,7 +183,7 @@ nav a:hover {
 
 /* Hero Section */
 .hero {
-    background: linear-gradient(rgba(44, 62, 80, 0.8), rgba(52, 152, 219, 0.8)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23e8f4f8" width="1200" height="600"/><circle fill="%23d4e9f1" cx="200" cy="150" r="80"/><circle fill="%23b8daea" cx="800" cy="300" r="120"/><circle fill="%23a0cde3" cx="1000" cy="100" r="60"/></svg>');
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.8), rgba(44, 62, 80, 0.8)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23e8f4f8" width="1200" height="600"/><circle fill="%23d4e9f1" cx="200" cy="150" r="80"/><circle fill="%23b8daea" cx="800" cy="300" r="120"/><circle fill="%23a0cde3" cx="1000" cy="100" r="60"/></svg>');
     background-size: cover;
     background-position: center;
     color: white;
@@ -621,7 +621,7 @@ footer {
 
 /* Optional: Scroll-triggered header effects */
 .header-scrolled {
-    background: linear-gradient(135deg, rgba(44, 62, 80, 0.98) 0%, rgba(52, 152, 219, 0.98) 100%);
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.98) 0%, rgba(44, 62, 80, 0.98) 100%);
     box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
