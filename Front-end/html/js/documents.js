@@ -486,17 +486,26 @@ class DocumentsManager {
 
         console.log(`📄 Rendering ${this.documents.length} documents`);
 
+        // Preserve static statute documents
+        const staticDocs = Array.from(documentsGrid.querySelectorAll('.document-card'))
+            .filter(card => {
+                const title = card.querySelector('h3')?.textContent || '';
+                return title.includes('Statutes 2025') || title.includes('Rules 2025');
+            })
+            .map(card => card.outerHTML)
+            .join('');
+
         if (this.documents.length === 0) {
-            documentsGrid.innerHTML = `
+            documentsGrid.innerHTML = staticDocs + `
             <div class="no-content">
-                <h3>No documents available</h3>
+                <h3>No additional documents available</h3>
                 <p>Documents will appear here once uploaded.</p>
             </div>
         `;
             return;
         }
 
-        documentsGrid.innerHTML = this.documents.map((doc, index) => `
+        documentsGrid.innerHTML = staticDocs + this.documents.map((doc, index) => `
         <div class="document-card" data-category="${doc.category.toLowerCase()}" data-doc-id="${doc.id}">
             <div class="document-icon">${this.getDocumentIcon(doc.category)}</div>
             <div class="document-info">
