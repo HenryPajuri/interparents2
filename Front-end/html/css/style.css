@@ -183,7 +183,7 @@ nav a:hover {
 
 /* Hero Section */
 .hero {
-    background: linear-gradient(135deg, rgba(52, 152, 219, 0.8), rgba(44, 62, 80, 0.8)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23e8f4f8" width="1200" height="600"/><circle fill="%23d4e9f1" cx="200" cy="150" r="80"/><circle fill="%23b8daea" cx="800" cy="300" r="120"/><circle fill="%23a0cde3" cx="1000" cy="100" r="60"/></svg>');
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.8) 0%, rgba(44, 62, 80, 0.8) 100%), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23e8f4f8" width="1200" height="600"/><circle fill="%23d4e9f1" cx="200" cy="150" r="80"/><circle fill="%23b8daea" cx="800" cy="300" r="120"/><circle fill="%23a0cde3" cx="1000" cy="100" r="60"/></svg>');
     background-size: cover;
     background-position: center;
     color: white;
