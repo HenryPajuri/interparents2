@@ -43,7 +43,7 @@ header::before {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 152, 219, 0.95) 100%);
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.95) 0%, rgba(44, 62, 80, 0.95) 100%);
     backdrop-filter: blur(10px);
     z-index: -1;
 }
