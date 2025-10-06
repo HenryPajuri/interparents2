@@ -94,12 +94,12 @@
 }
 
 .member-image img {
-    width: 120px !important;
-    height: 120px !important;
+    width: 180px !important;
+    height: 180px !important;
     border-radius: 50% !important;
     object-fit: cover !important;
-    border: 4px solid #3498db !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    border: 5px solid #3498db !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
     transition: transform 0.3s ease, box-shadow 0.3s ease !important;
     display: block !important;
     margin: 0 auto !important;
@@ -114,8 +114,8 @@
 }
 
 .member-profile:hover .member-image img {
-    transform: scale(1.05) !important;
-    box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3) !important;
+    transform: scale(1.08) !important;
+    box-shadow: 0 10px 30px rgba(52, 152, 219, 0.4) !important;
 }
 
 /* Different border colors for each member with images */
