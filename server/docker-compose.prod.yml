@@ -1,0 +1,156 @@
+version: '3.8'
+
+services:
+  # Frontend (Nginx serving static files)
+  frontend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Mount SSL certificates if using Let's Encrypt
+      # - ./ssl:/etc/nginx/ssl:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../Front-end:/usr/share/nginx/html:ro
+      - ./data/documents:/usr/share/nginx/html/pdf:ro
+    restart: unless-stopped
+    container_name: interparents-frontend-prod
+    depends_on:
+      - backend
+    networks:
+      - interparents-network
+    environment:
+      - NGINX_HOST=interparents.eu
+      - NGINX_PORT=80
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Backend API (Node.js/Express with Supabase)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - MONGODB_URI=${MONGODB_URI}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-10}
+    volumes:
+      - pdf_uploads:/app/data/documents
+      - app_logs:/app/logs
+    restart: unless-stopped
+    container_name: interparents-backend-prod
+    depends_on:
+      - mongodb
+    networks:
+      - interparents-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # MongoDB Database (for Events and Communications only)
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=interparents
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ./mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    restart: unless-stopped
+    container_name: interparents-mongodb-prod
+    networks:
+      - interparents-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/interparents --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # MongoDB Backup Service (optional but recommended)
+  mongodb-backup:
+    image: mongo:7.0
+    environment:
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGO_DATABASE=interparents
+      - MONGO_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_PASSWORD=${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongodb_backups:/backups
+      - ./scripts/backup-mongo.sh:/backup-mongo.sh:ro
+    restart: "no"
+    container_name: interparents-backup
+    networks:
+      - interparents-network
+    entrypoint: /backup-mongo.sh
+    profiles:
+      - backup
+
+volumes:
+  mongodb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/mongodb
+  mongodb_config:
+    driver: local
+  mongodb_backups:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./backups
+  pdf_uploads:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/documents
+  app_logs:
+    driver: local
+
+networks:
+  interparents-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

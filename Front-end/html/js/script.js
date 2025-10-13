@@ -1,4 +1,3 @@
-// Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -84,11 +83,14 @@ window.addEventListener('scroll', function() {
     }
 });
 
-// ========== DYNAMIC COMMUNICATIONS MANAGER ==========
 
 class CommunicationsManager {
     constructor() {
-        this.API_BASE = 'https://interparents-1.onrender.com/api';
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            this.API_BASE = 'http://localhost:3001/api';
+        } else {
+            this.API_BASE = 'https://interparents.eu/api';
+        }
         this.communications = [];
         this.init();
     }
@@ -236,7 +238,7 @@ class CommunicationsManager {
                         <span style="background: ${this.getCategoryColor(comm.category)}; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.8rem; font-weight: 500;">${categoryName}</span>
                     </div>` : ''}
                     <p>${comm.description}</p>
-                 <a href="https://interparents-1.onrender.com/pdf/${comm.filename}" class="download-link" target="_blank" rel="noopener">Download (PDF)</a>
+                 <a href="https://interparents.eu/pdf/${comm.filename}" class="download-link" target="_blank" rel="noopener">Download (PDF)</a>
                 </div>
             `;
         }).join('');
@@ -282,11 +284,14 @@ class CommunicationsManager {
     }
 }
 
-// ========== AUTHENTICATION STATE MANAGER ==========
 
 class AuthStateManager {
     constructor() {
-        this.API_BASE = 'https://interparents-1.onrender.com/api';
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            this.API_BASE = 'http://localhost:3001/api';
+        } else {
+            this.API_BASE = 'https://interparents.eu/api';
+        }
         this.user = null;
         this.init();
     }

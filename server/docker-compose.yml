@@ -3,14 +3,14 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile  # This should be server/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "8080:80"
     volumes:
       - ../Front-end/html:/usr/share/nginx/html/html:ro
       - ../Front-end/css:/usr/share/nginx/html/css:ro
       - ../Front-end/js:/usr/share/nginx/html/js:ro
-      - ./pdf:/usr/share/nginx/html/pdf:ro
+      - ./data/documents:/usr/share/nginx/html/pdf:ro
       - ../Front-end/html/index.html:/usr/share/nginx/html/index.html:ro
     restart: unless-stopped
     container_name: interparents-frontend
@@ -19,66 +19,19 @@ services:
     networks:
       - interparents-network
 
-  # Backend API (Node.js/Express)
+  # Backend API (Node.js/Express with Supabase)
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile  # This should be server/backend/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "3001:3001"
-    environment:
-      - NODE_ENV=development
-      - PORT=3001
-      - MONGODB_URI=mongodb://mongodb:27017/interparents
-      - JWT_SECRET=interparents-jwt-secret-change-in-production
-      - FRONTEND_URL=http://localhost:8080
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
+    env_file:
+      - ./.env
     restart: unless-stopped
     container_name: interparents-backend
-    depends_on:
-      - mongodb
     networks:
       - interparents-network
-
-  # MongoDB Database
-  mongodb:
-    image: mongo:7.0
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_DATABASE=interparents
-    volumes:
-      - mongodb_data:/data/db
-    restart: unless-stopped
-    container_name: interparents-mongodb
-    networks:
-      - interparents-network
-
-  # MongoDB Admin Interface (optional)
-  mongo-express:
-    image: mongo-express:1.0.0
-    ports:
-      - "8081:8081"
-    environment:
-      - ME_CONFIG_MONGODB_SERVER=mongodb
-      - ME_CONFIG_MONGODB_PORT=27017
-      - ME_CONFIG_BASICAUTH_USERNAME=admin
-      - ME_CONFIG_BASICAUTH_PASSWORD=admin123
-      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
-    restart: unless-stopped
-    container_name: interparents-mongo-express
-    depends_on:
-      - mongodb
-    networks:
-      - interparents-network
-    profiles:
-      - admin
-
-volumes:
-  mongodb_data:
-    driver: local
 
 networks:
   interparents-network:

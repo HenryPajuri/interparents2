@@ -25,6 +25,7 @@
                         <li><a href="dashboard.html">Dashboard</a></li>
                         <li><a href="index.html#home">Home</a></li>
                         <li><a href="about.html">About</a></li>
+                        <li><a href="members.html">Members</a></li>
                         <li><a href="calendar.html">Calendar</a></li>
                         <li><a href="documents.html">Documents</a></li>
                         <li><a href="#" id="logoutBtn">Logout</a></li>
@@ -156,8 +157,8 @@
                     <div class="form-group">
                         <label for="userPassword">Password *</label>
                         <div class="admin-password-input-wrapper">
-                            <input type="password" id="userPassword" name="password" required minlength="6" 
-                                   placeholder="Minimum 6 characters">
+                            <input type="password" id="userPassword" name="password" required minlength="8"
+                                   placeholder="Minimum 8 characters">
                             <button type="button" class="admin-password-toggle" data-target="userPassword">
                                 <span class="toggle-text">Show</span>
                             </button>
@@ -167,7 +168,7 @@
                     <div class="form-group">
                         <label for="userConfirmPassword">Confirm Password *</label>
                         <div class="admin-password-input-wrapper">
-                            <input type="password" id="userConfirmPassword" name="confirmPassword" required minlength="6" 
+                            <input type="password" id="userConfirmPassword" name="confirmPassword" required minlength="8"
                                    placeholder="Confirm password">
                             <button type="button" class="admin-password-toggle" data-target="userConfirmPassword">
                                 <span class="toggle-text">Show</span>
@@ -183,7 +184,7 @@
                     <div class="requirements-grid">
                         <div class="requirement-item" id="admin-req-length">
                             <span class="req-icon">○</span>
-                            <span class="req-text">At least 6 characters</span>
+                            <span class="req-text">At least 8 characters</span>
                         </div>
                         <div class="requirement-item" id="admin-req-lowercase">
                             <span class="req-icon">○</span>
@@ -249,6 +250,8 @@
                         Adding User...
                     </span>
                 </button>
+
+                <div id="userFormMessage" class="form-message" style="display: none;"></div>
             </form>
         </div>
 

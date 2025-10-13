@@ -1,6 +1,10 @@
 class Dashboard {
     constructor() {
-        this.API_BASE = 'https://interparents-1.onrender.com/api';
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            this.API_BASE = 'http://localhost:3001/api';
+        } else {
+            this.API_BASE = 'https://interparents.eu/api';
+        }
         this.user = null;
         this.passwordChangeVisible = false;
         console.log('Dashboard initialized with API_BASE:', this.API_BASE);
@@ -101,7 +105,6 @@ class Dashboard {
             if (uploadBtn) uploadBtn.style.display = 'block';
         }
 
-        // Bind the change password trigger after UI update
         this.bindPasswordTrigger();
     }
 
@@ -133,25 +136,21 @@ class Dashboard {
     }
 
     initializePasswordChange() {
-        // Bind password change form events
         this.bindPasswordChangeEvents();
         this.initializePasswordValidation();
     }
 
     bindPasswordChangeEvents() {
-        // Form submission
         const form = document.getElementById('passwordChangeForm');
         if (form) {
             form.addEventListener('submit', (e) => this.handlePasswordChange(e));
         }
 
-        // Cancel button
         const cancelBtn = document.getElementById('cancelPasswordChange');
         if (cancelBtn) {
             cancelBtn.addEventListener('click', () => this.hidePasswordChange());
         }
 
-        // Password toggle buttons
         document.querySelectorAll('.password-toggle').forEach(btn => {
             btn.addEventListener('click', (e) => this.togglePasswordVisibility(e));
         });
@@ -191,7 +190,6 @@ class Dashboard {
             passwordCard.style.display = 'block';
             this.passwordChangeVisible = true;
             
-            // Scroll to password change section
             setTimeout(() => {
                 passwordCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 100);
@@ -249,7 +247,6 @@ class Dashboard {
             number: /\d/.test(password)
         };
 
-        // Update requirement indicators
         Object.keys(requirements).forEach(req => {
             const element = document.getElementById(`req-${req}`);
             if (element) {
@@ -257,7 +254,6 @@ class Dashboard {
             }
         });
 
-        // Calculate strength
         const metRequirements = Object.values(requirements).filter(Boolean).length;
         let strength = '';
         let strengthClass = '';
@@ -304,7 +300,6 @@ class Dashboard {
         document.getElementById('passwordStrength').textContent = '';
         document.getElementById('passwordMatch').textContent = '';
         
-        // Reset requirement indicators
         document.querySelectorAll('.password-requirements li').forEach(li => {
             li.classList.remove('met');
         });
@@ -321,7 +316,6 @@ class Dashboard {
             confirmPassword: formData.get('confirmPassword')
         };
 
-        // Validate form
         if (!this.validatePasswordForm(data)) {
             return;
         }
@@ -330,7 +324,6 @@ class Dashboard {
         const saveText = document.getElementById('savePasswordText');
         const saveSpinner = document.getElementById('savePasswordSpinner');
 
-        // Set loading state
         saveBtn.disabled = true;
         saveText.style.display = 'none';
         saveSpinner.style.display = 'inline-flex';
@@ -352,7 +345,6 @@ class Dashboard {
                 form.reset();
                 this.clearPasswordValidation();
                 
-                // Auto-hide after success
                 setTimeout(() => {
                     this.hidePasswordChange();
                 }, 3000);
@@ -364,7 +356,6 @@ class Dashboard {
             console.error('Password change error:', error);
             this.showPasswordMessage('Network error. Please try again.', 'error');
         } finally {
-            // Reset loading state
             saveBtn.disabled = false;
             saveText.style.display = 'inline';
             saveSpinner.style.display = 'none';

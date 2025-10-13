@@ -1,7 +1,10 @@
-// Documents and Webinars Page JavaScript
 class DocumentsManager {
     constructor() {
-        this.API_BASE = 'https://interparents-1.onrender.com/api';
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            this.API_BASE = 'http://localhost:3001/api';
+        } else {
+            this.API_BASE = 'https://interparents.eu/api';
+        }
         this.documents = [];
         this.webinars = [];
         this.currentView = 'grid';
@@ -21,7 +24,6 @@ class DocumentsManager {
         this.renderContent();
     }
 
-    // Check authentication state
     async checkAuthState() {
         try {
             const response = await fetch(`${this.API_BASE}/auth/me`, {
@@ -49,7 +51,6 @@ class DocumentsManager {
         }
     }
 
-    // Update UI based on authentication state
     updateUI() {
         const adminNotice = document.getElementById('adminNotice');
 
@@ -59,11 +60,9 @@ class DocumentsManager {
             adminNotice.style.display = 'none';
         }
 
-        // Update navigation if needed
         this.updateNavigation();
     }
 
-    // Update navigation to show proper login/logout state
     updateNavigation() {
         const loginNavItem = document.querySelector('.login-nav-item');
         if (!loginNavItem || !this.currentUser) return;
@@ -85,7 +84,6 @@ class DocumentsManager {
         }
     }
 
-    // Logout functionality
     async logout() {
         try {
             await fetch(`${this.API_BASE}/auth/logout`, {
@@ -103,19 +101,16 @@ class DocumentsManager {
     }
 
     bindEvents() {
-        // Search functionality
         const globalSearch = document.getElementById('globalSearch');
         if (globalSearch) {
             globalSearch.addEventListener('input', (e) => this.handleSearch(e.target.value));
         }
 
-        // Category filter
         const categoryFilter = document.getElementById('categoryFilter');
         if (categoryFilter) {
             categoryFilter.addEventListener('change', (e) => this.handleFilter(e.target.value));
         }
 
-        // View controls
         document.querySelectorAll('.view-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const button = e.target.closest('.view-btn');
@@ -125,7 +120,6 @@ class DocumentsManager {
             });
         });
 
-        // Upload buttons
         const uploadDocumentBtn = document.getElementById('uploadDocumentBtn');
         const uploadWebinarBtn = document.getElementById('uploadWebinarBtn');
 
@@ -137,7 +131,6 @@ class DocumentsManager {
             uploadWebinarBtn.addEventListener('click', () => this.openUploadModal('webinar'));
         }
 
-        // Form submissions
         const uploadForm = document.getElementById('uploadForm');
         const webinarForm = document.getElementById('webinarForm');
 
@@ -149,13 +142,11 @@ class DocumentsManager {
             webinarForm.addEventListener('submit', (e) => this.handleWebinarUpload(e));
         }
 
-        // File input change
         const documentFile = document.getElementById('documentFile');
         if (documentFile) {
             documentFile.addEventListener('change', (e) => this.handleFileChange(e));
         }
 
-        // Close modals when clicking outside
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal-overlay')) {
                 e.target.remove();
@@ -163,12 +154,10 @@ class DocumentsManager {
         });
     }
 
-    // Load webinars from localStorage and merge with default data
     async loadWebinars() {
         try {
             console.log('🎥 Loading webinars...');
     
-            // Load default webinars
             const defaultWebinars = [
                 {
                     id: 'web1',
@@ -216,18 +205,14 @@ class DocumentsManager {
                 }
             ];
     
-            // Load custom webinars from localStorage
             const savedWebinars = JSON.parse(localStorage.getItem('customWebinars') || '[]');
             
-            // Load list of deleted default webinars
             const deletedDefaults = JSON.parse(localStorage.getItem('deletedDefaultWebinars') || '[]');
             
-            // Filter out deleted default webinars
             const activeDefaultWebinars = defaultWebinars.filter(webinar => 
                 !deletedDefaults.includes(webinar.id)
             );
             
-            // Combine custom and active default webinars
             this.webinars = [...savedWebinars, ...activeDefaultWebinars];
     
             console.log(`✅ Loaded ${this.webinars.length} webinars (${savedWebinars.length} custom + ${activeDefaultWebinars.length} default)`);
@@ -239,10 +224,8 @@ class DocumentsManager {
             this.showMessage('Error loading webinars', 'error');
         }
     }
-    // Save custom webinars to localStorage
     saveCustomWebinars() {
         try {
-            // Filter out default webinars (those with predefined IDs)
             const defaultIds = ['web1', 'web2', 'web3', 'web4'];
             const customWebinars = this.webinars.filter(webinar => !defaultIds.includes(webinar.id));
             
@@ -275,7 +258,6 @@ class DocumentsManager {
         const formData = new FormData(e.target);
         const webinarData = Object.fromEntries(formData.entries());
 
-        // Show uploading state
         const submitBtn = e.target.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent;
         this.setButtonLoading(submitBtn, true, 'Adding...');
@@ -283,10 +265,8 @@ class DocumentsManager {
         try {
             console.log('Webinar data:', webinarData);
 
-            // Simulate API delay
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Create new webinar object
             const newWebinar = {
                 id: 'custom-' + Date.now(),
                 title: webinarData.title,
@@ -299,28 +279,23 @@ class DocumentsManager {
                 type: 'webinar'
             };
 
-            // Add to beginning of array
             this.webinars.unshift(newWebinar);
             
-            // Save to localStorage
             this.saveCustomWebinars();
 
             this.showMessage('Webinar added successfully!', 'success');
             this.closeWebinarModal();
 
-            // Re-render webinars
             this.renderWebinars();
 
         } catch (error) {
             console.error('Webinar upload error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         } finally {
-            // Reset loading state
             this.setButtonLoading(submitBtn, false);
         }
     }
 
-    // Utility method for button loading states
     setButtonLoading(button, loading, loadingText = 'Loading...') {
         if (loading) {
             button.dataset.originalText = button.textContent;
@@ -334,7 +309,6 @@ class DocumentsManager {
         }
     }
 
-    // Updated switchView method to be more robust
     switchView(view) {
         console.log('👀 Switching to view:', view);
 
@@ -345,7 +319,6 @@ class DocumentsManager {
 
         this.currentView = view;
 
-        // Update button states
         document.querySelectorAll('.view-btn').forEach(btn => {
             btn.classList.remove('active');
             if (btn.dataset.view === view) {
@@ -353,7 +326,6 @@ class DocumentsManager {
             }
         });
 
-        // Update container classes
         const container = document.querySelector('.main-content');
         if (container) {
             container.classList.remove('view-grid', 'view-list');
@@ -365,7 +337,6 @@ class DocumentsManager {
         try {
             console.log('📄 Loading documents from API...');
 
-            // Fetch from your existing communications API
             const response = await fetch(`${this.API_BASE}/communications`, {
                 credentials: 'include'
             });
@@ -373,20 +344,25 @@ class DocumentsManager {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.communications) {
-                    // Convert API data to our format
-                    this.documents = data.communications.map(comm => ({
-                        id: comm._id,
-                        title: comm.title,
-                        category: comm.category,
-                        description: comm.description,
-                        date: new Date(comm.publishDate).toLocaleDateString(),
-                        size: this.formatFileSize(comm.fileSize),
-                        filename: comm.filename,
-                        uploadedBy: comm.uploadedBy?.name,
-                        type: 'document'
-                    }));
+                    this.documents = data.communications.map(comm => {
+                        if (!comm.id) {
+                            console.warn('⚠️ Document missing ID:', comm.title, comm);
+                        }
+                        return {
+                            id: comm.id,
+                            title: comm.title,
+                            category: comm.category,
+                            description: comm.description,
+                            date: new Date(comm.publishDate).toLocaleDateString(),
+                            size: this.formatFileSize(comm.fileSize),
+                            filename: comm.filename,
+                            uploadedBy: comm.uploadedBy?.name,
+                            type: 'document'
+                        };
+                    });
 
                     console.log(`✅ Loaded ${this.documents.length} documents from API`);
+                    console.log('📋 Sample document IDs:', this.documents.slice(0, 3).map(d => ({ title: d.title, id: d.id })));
                 }
             } else {
                 throw new Error('Failed to fetch communications');
@@ -394,7 +370,6 @@ class DocumentsManager {
         } catch (error) {
             console.error('❌ Error loading documents:', error);
 
-            // Fall back to DOM extraction if API fails
             console.log('📄 Falling back to DOM extraction...');
             this.documents = this.extractDocumentsFromDOM();
 
@@ -422,7 +397,6 @@ class DocumentsManager {
         const allItems = [...this.documents, ...this.webinars];
 
         if (!searchTerm.trim()) {
-            // Show all items
             allItems.forEach(item => {
                 if (item.element) item.element.style.display = 'block';
             });
@@ -449,7 +423,6 @@ class DocumentsManager {
         const allItems = [...this.documents, ...this.webinars];
 
         if (category === 'all') {
-            // Show all items
             allItems.forEach(item => {
                 if (item.element) item.element.style.display = 'block';
             });
@@ -457,9 +430,23 @@ class DocumentsManager {
         }
 
         allItems.forEach(item => {
-            const matchesCategory = item.category === category ||
-                (category === 'webinar' && item.type === 'webinar') ||
-                (category === 'presentation' && item.category === 'presentation');
+            let matchesCategory = false;
+
+            if (category === 'policy') {
+                matchesCategory = item.category === 'Policy';
+            } else if (category === 'guidelines') {
+                matchesCategory = item.category === 'JTC' || item.category === 'BOG';
+            } else if (category === 'reports') {
+                matchesCategory = item.category === 'Report';
+            } else if (category === 'training') {
+                matchesCategory = item.category === 'Memo';
+            } else if (category === 'webinar') {
+                matchesCategory = item.type === 'webinar' || item.category === 'webinar';
+            } else if (category === 'presentation') {
+                matchesCategory = item.category === 'presentation';
+            } else {
+                matchesCategory = item.category === category;
+            }
 
             if (item.element) {
                 item.element.style.display = matchesCategory ? 'block' : 'none';
@@ -470,13 +457,10 @@ class DocumentsManager {
     renderContent() {
         console.log('🎨 Rendering content...');
 
-        // Render documents
         this.renderDocuments();
 
-        // Render webinars
         this.renderWebinars();
 
-        // Add animations
         this.addCardAnimations();
     }
 
@@ -486,26 +470,17 @@ class DocumentsManager {
 
         console.log(`📄 Rendering ${this.documents.length} documents`);
 
-        // Preserve static statute documents
-        const staticDocs = Array.from(documentsGrid.querySelectorAll('.document-card'))
-            .filter(card => {
-                const title = card.querySelector('h3')?.textContent || '';
-                return title.includes('Statutes 2025') || title.includes('Rules 2025');
-            })
-            .map(card => card.outerHTML)
-            .join('');
-
         if (this.documents.length === 0) {
-            documentsGrid.innerHTML = staticDocs + `
+            documentsGrid.innerHTML = `
             <div class="no-content">
-                <h3>No additional documents available</h3>
+                <h3>No documents available</h3>
                 <p>Documents will appear here once uploaded.</p>
             </div>
         `;
             return;
         }
 
-        documentsGrid.innerHTML = staticDocs + this.documents.map((doc, index) => `
+        documentsGrid.innerHTML = this.documents.map((doc, index) => `
         <div class="document-card" data-category="${doc.category.toLowerCase()}" data-doc-id="${doc.id}">
             <div class="document-icon">${this.getDocumentIcon(doc.category)}</div>
             <div class="document-info">
@@ -534,10 +509,8 @@ class DocumentsManager {
         </div>
     `).join('');
 
-        // Bind event listeners for document actions
         this.bindDocumentActions();
 
-        // Re-extract documents for search/filter functionality
         this.documents = this.documents.map(doc => ({
             ...doc,
             element: documentsGrid.querySelector(`[data-doc-id="${doc.id}"]`)
@@ -560,7 +533,6 @@ class DocumentsManager {
             return;
         }
 
-        // REMOVED TRANSCRIPT BUTTON FROM HERE
         webinarsGrid.innerHTML = this.webinars.map((webinar, index) => `
         <div class="webinar-card" data-category="${webinar.category}" data-webinar-id="${webinar.id}">
             <div class="webinar-thumbnail">
@@ -591,49 +563,44 @@ class DocumentsManager {
         </div>
     `).join('');
 
-        // Bind event listeners for webinar actions
         this.bindWebinarActions();
 
-        // Re-extract webinars for search/filter functionality
         this.webinars = this.webinars.map(webinar => ({
             ...webinar,
             element: webinarsGrid.querySelector(`[data-webinar-id="${webinar.id}"]`)
         }));
     }
 
-    // New method to bind document action buttons
     bindDocumentActions() {
-        // View document buttons
         document.querySelectorAll('.view-doc-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const filename = e.target.dataset.filename;
-                const title = e.target.dataset.title;
+                const button = e.target.closest('.view-doc-btn');
+                const filename = button.dataset.filename;
+                const title = button.dataset.title;
                 this.viewDocument(filename, title);
             });
         });
 
-        // Download document buttons
         document.querySelectorAll('.download-doc-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const filename = e.target.dataset.filename;
-                const title = e.target.dataset.title;
+                const button = e.target.closest('.download-doc-btn');
+                const filename = button.dataset.filename;
+                const title = button.dataset.title;
                 this.downloadDocument(filename, title);
             });
         });
 
-        // Delete document buttons
         document.querySelectorAll('.delete-doc-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const docId = e.target.dataset.docId;
-                const title = e.target.dataset.title;
+                const button = e.target.closest('.delete-doc-btn');
+                const docId = button.dataset.docId;
+                const title = button.dataset.title;
                 this.deleteDocument(docId, title);
             });
         });
     }
 
-    // UPDATED: Removed transcript button binding
     bindWebinarActions() {
-        // Watch webinar buttons (including play icons)
         document.querySelectorAll('.watch-webinar-btn, .play-icon').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const webinarId = e.target.dataset.webinarId;
@@ -644,7 +611,6 @@ class DocumentsManager {
             });
         });
 
-        // Delete webinar buttons
         document.querySelectorAll('.delete-webinar-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const webinarId = e.target.dataset.webinarId;
@@ -654,20 +620,16 @@ class DocumentsManager {
         });
     }
 
-    // Document action methods
     viewDocument(filename, title) {
         console.log('👁️ Viewing document:', filename);
 
-        const documentUrl = `${this.API_BASE.replace('/api', '')}/pdf/${filename}`;
+        const documentUrl = `${this.API_BASE}/files/${filename}`;
 
-        // Open in new tab for viewing
         const newWindow = window.open(documentUrl, '_blank');
 
         if (!newWindow) {
-            // Fallback if popup was blocked
             this.showMessage('Please allow popups to view documents, or try the download button', 'warning');
 
-            // Alternative: show in modal
             this.showDocumentModal(documentUrl, title);
         } else {
             this.showMessage(`Opening "${title}" in new tab`, 'info');
@@ -677,9 +639,8 @@ class DocumentsManager {
     downloadDocument(filename, title) {
         console.log('⬇️ Downloading document:', filename);
 
-        const documentUrl = `${this.API_BASE.replace('/api', '')}/pdf/${filename}`;
+        const documentUrl = `${this.API_BASE}/files/${filename}?download=true`;
 
-        // Create temporary download link
         const downloadLink = document.createElement('a');
         downloadLink.href = documentUrl;
         downloadLink.download = filename;
@@ -720,13 +681,11 @@ class DocumentsManager {
         }
     }
 
-    // UPDATED: Fixed video URL opening
     watchWebinar(webinar) {
         console.log('▶️ Watching webinar:', webinar.title);
         console.log('Video URL:', webinar.videoUrl);
 
         if (webinar.videoUrl && webinar.videoUrl !== '#' && webinar.videoUrl.trim() !== '') {
-            // If we have a real video URL, open it
             console.log('Opening video URL:', webinar.videoUrl);
             const newWindow = window.open(webinar.videoUrl, '_blank');
             
@@ -736,7 +695,6 @@ class DocumentsManager {
                 this.showMessage('Please allow popups to open video links', 'warning');
             }
         } else {
-            // Show demo video modal
             console.log('No valid URL, showing demo modal');
             this.showWebinarModal(webinar);
         }
@@ -751,9 +709,7 @@ deleteWebinar(webinarId, title) {
 
     const defaultIds = ['web1', 'web2', 'web3', 'web4'];
     
-    // Check if this is a default webinar
     if (defaultIds.includes(webinarId)) {
-        // Add to deleted defaults list
         const deletedDefaults = JSON.parse(localStorage.getItem('deletedDefaultWebinars') || '[]');
         if (!deletedDefaults.includes(webinarId)) {
             deletedDefaults.push(webinarId);
@@ -761,17 +717,14 @@ deleteWebinar(webinarId, title) {
         }
     }
 
-    // Remove from local array
     this.webinars = this.webinars.filter(w => w.id !== webinarId);
     
-    // Save updated custom webinars list
     this.saveCustomWebinars();
 
     this.showMessage(`"${title}" deleted successfully`, 'success');
     this.renderWebinars();
 }
 
-    // Modal methods
     showDocumentModal(url, title) {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay show';
@@ -852,7 +805,6 @@ deleteWebinar(webinarId, title) {
     }
 
     addCardAnimations() {
-        // Add staggered animation to cards
         const cards = document.querySelectorAll('.document-card, .webinar-card');
         cards.forEach((card, index) => {
             card.style.animationDelay = `${index * 0.1}s`;
@@ -897,14 +849,12 @@ deleteWebinar(webinarId, title) {
 
         status.style.display = 'block';
 
-        // Backend only accepts PDF files for communications
         if (file.type !== 'application/pdf') {
             status.textContent = 'Please select a PDF file only';
             status.className = 'file-status error';
             return;
         }
 
-        // Check file size (10MB limit)
         if (file.size > 10 * 1024 * 1024) {
             status.textContent = 'File size must be less than 10MB';
             status.className = 'file-status error';
@@ -927,7 +877,6 @@ deleteWebinar(webinarId, title) {
 
         const formData = new FormData(e.target);
 
-        // Show uploading state
         const uploadBtn = document.getElementById('uploadBtn');
         const originalText = uploadBtn.textContent;
         uploadBtn.disabled = true;
@@ -946,7 +895,6 @@ deleteWebinar(webinarId, title) {
                 this.showMessage('Document uploaded successfully!', 'success');
                 this.closeUploadModal();
 
-                // Reload documents from API and re-render
                 await this.loadDocuments();
                 this.renderContent();
 
@@ -963,7 +911,6 @@ deleteWebinar(webinarId, title) {
             console.error('❌ Upload error:', error);
             this.showMessage('Network error. Please try again.', 'error');
         } finally {
-            // Reset button state
             uploadBtn.disabled = false;
             uploadBtn.textContent = originalText;
         }
@@ -1011,7 +958,6 @@ deleteWebinar(webinarId, title) {
 
         messageContainer.appendChild(messageDiv);
 
-        // Auto-remove after delay
         setTimeout(() => {
             if (messageDiv.parentNode) {
                 messageDiv.remove();
@@ -1020,7 +966,6 @@ deleteWebinar(webinarId, title) {
     }
 }
 
-// Global functions for modal management
 function closeUploadModal() {
     if (window.documentsManager) {
         window.documentsManager.closeUploadModal();
@@ -1033,19 +978,16 @@ function closeWebinarModal() {
     }
 }
 
-// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🌟 DOM loaded, initializing documents manager...');
     window.documentsManager = new DocumentsManager();
 
-    // Close modals when clicking outside
     document.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal-overlay')) {
             e.target.classList.remove('show');
         }
     });
 
-    // Add CSS for animations if not already present
     if (!document.querySelector('#documents-animations')) {
         const style = document.createElement('style');
         style.id = 'documents-animations';

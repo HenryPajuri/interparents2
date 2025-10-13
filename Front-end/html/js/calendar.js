@@ -1,4 +1,3 @@
-// Enhanced Calendar functionality with proper authentication integration, debouncing, and error handling
 class Calendar {
     constructor() {
         this.currentDate = new Date();
@@ -6,13 +5,16 @@ class Calendar {
         this.events = [];
         this.selectedEventId = null;
         this.isEditMode = false;
-        this.API_BASE = 'https://interparents-1.onrender.com/api';
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            this.API_BASE = 'http://localhost:3001/api';
+        } else {
+            this.API_BASE = 'https://interparents.eu/api';
+        }
         this.isLoading = false;
         this.debugMode = true;
         this.isAuthenticated = false;
         this.currentUser = null;
         
-        // Add debouncing properties
         this.navigationTimeout = null;
         this.lastNavigationTime = 0;
         this.NAVIGATION_DEBOUNCE_MS = 500; // 500ms debounce
@@ -26,7 +28,6 @@ class Calendar {
     async init() {
         console.log('🔄 Initializing calendar...');
         
-        // First check authentication state
         await this.checkAuthState();
         
         this.bindEvents();
@@ -39,7 +40,6 @@ class Calendar {
         console.log('✅ Calendar initialization complete');
     }
 
-    // Check authentication state
     async checkAuthState() {
         try {
             const response = await fetch(`${this.API_BASE}/auth/me`, {
@@ -67,31 +67,31 @@ class Calendar {
         }
     }
 
-    // Update UI based on authentication state
     updateUI() {
         const addEventBtn = document.getElementById('addEventBtn');
+        const todayBtn = document.getElementById('todayBtn');
         const authNotice = document.getElementById('authNotice');
-        
+        const calendarActions = document.getElementById('calendarActions');
+
         if (this.isAuthenticated) {
-            // User is logged in
             if (addEventBtn) addEventBtn.style.display = 'block';
+            if (todayBtn) todayBtn.style.display = 'block';
             if (authNotice) authNotice.style.display = 'none';
-            
-            // Update navigation if AuthStateManager hasn't loaded yet
+            if (calendarActions) calendarActions.classList.remove('guest-mode');
+
             this.updateNavigation();
         } else {
-            // User is not logged in
             if (addEventBtn) addEventBtn.style.display = 'none';
+            if (todayBtn) todayBtn.style.display = 'none';
             if (authNotice) authNotice.style.display = 'block';
+            if (calendarActions) calendarActions.classList.add('guest-mode');
         }
     }
 
-    // Update navigation to show proper login/logout state
     updateNavigation() {
         const loginNavItem = document.querySelector('.login-nav-item');
         if (!loginNavItem || !this.currentUser) return;
 
-        // Only update if it's still showing login button
         const loginButton = loginNavItem.querySelector('a[href="login.html"]');
         if (loginButton) {
             loginNavItem.innerHTML = `
@@ -109,7 +109,6 @@ class Calendar {
         }
     }
 
-    // Logout functionality
     async logout() {
         try {
             await fetch(`${this.API_BASE}/auth/logout`, {
@@ -126,7 +125,6 @@ class Calendar {
         }
     }
 
-    // Enhanced API call with retry logic and rate limit handling
     async apiCall(endpoint, options = {}, retryCount = 0) {
         const url = `${this.API_BASE}${endpoint}`;
         console.log(`🌐 API Call (attempt ${retryCount + 1}): ${options.method || 'GET'} ${url}`);
@@ -144,7 +142,6 @@ class Calendar {
             const response = await fetch(url, mergedOptions);
             console.log(`📥 Response: ${response.status} ${response.statusText}`);
             
-            // Handle rate limiting
             if (response.status === 429) {
                 const retryAfter = response.headers.get('Retry-After') || this.rateLimitBackoff / 1000;
                 console.warn(`⏰ Rate limited. Retry after ${retryAfter} seconds`);
@@ -160,7 +157,6 @@ class Calendar {
                 }
             }
             
-            // Reset backoff on successful request
             if (response.ok) {
                 this.rateLimitBackoff = 1000;
             }
@@ -176,7 +172,6 @@ class Calendar {
                     console.error('❌ Could not parse error response as JSON');
                 }
                 
-                // For events endpoint, if user is not authenticated, that's OK for viewing
                 if (response.status === 401 && endpoint.includes('/events') && options.method !== 'POST' && options.method !== 'PUT' && options.method !== 'DELETE') {
                     console.log('ℹ️ Loading events without authentication');
                     return { success: false, needsAuth: true };
@@ -197,7 +192,6 @@ class Calendar {
         } catch (error) {
             console.error('💥 API call failed:', error);
             
-            // If it's a network error and we haven't retried too much, try again
             if (error.message.includes('NetworkError') && retryCount < this.maxRetries) {
                 const waitTime = Math.min(this.rateLimitBackoff * Math.pow(2, retryCount), 5000);
                 console.log(`🔄 Network error, retrying in ${waitTime}ms...`);
@@ -210,7 +204,6 @@ class Calendar {
         }
     }
 
-    // Enhanced event loading that works without authentication
     async loadEvents() {
         try {
             console.log('📅 Loading events...');
@@ -225,7 +218,6 @@ class Calendar {
                 this.events = data.events || [];
                 console.log(`✅ Loaded ${this.events.length} events from backend`);
             } else if (data && data.needsAuth) {
-                // Load public events without authentication
                 console.log('📅 Loading sample/public events for non-authenticated user');
                 this.events = this.loadSampleEvents();
             } else {
@@ -235,7 +227,6 @@ class Calendar {
         } catch (error) {
             console.error('❌ Error loading events from backend:', error);
             
-            // Show user-friendly error message
             if (error.message.includes('Rate limited')) {
                 this.showMessage('Too many requests. Please wait a moment before trying again.', 'warning');
             } else if (error.message.includes('NetworkError')) {
@@ -250,7 +241,6 @@ class Calendar {
     }
 
     bindEvents() {
-        // Navigation buttons - with debouncing awareness
         document.getElementById('prevBtn').addEventListener('click', () => {
             if (!this.isLoading) this.navigatePrev();
         });
@@ -261,25 +251,19 @@ class Calendar {
             if (!this.isLoading) this.goToToday();
         });
 
-        // View controls
         document.querySelectorAll('.view-btn').forEach(btn => {
             btn.addEventListener('click', (e) => this.switchView(e.target.dataset.view));
         });
 
-        // Add event button
         document.getElementById('addEventBtn').addEventListener('click', () => this.openEventModal());
 
-        // Event form
         document.getElementById('eventForm').addEventListener('submit', (e) => this.saveEvent(e));
 
-        // Agenda filter
         document.getElementById('agendaFilter').addEventListener('change', () => this.renderAgenda());
 
-        // Edit event button in details modal
         document.getElementById('editEventBtn').addEventListener('click', () => this.editCurrentEvent());
     }
 
-    // Check if navigation should be blocked (debouncing)
     isNavigationBlocked() {
         const now = Date.now();
         if (now - this.lastNavigationTime < this.NAVIGATION_DEBOUNCE_MS) {
@@ -290,7 +274,6 @@ class Calendar {
         return false;
     }
 
-    // Debounced event loading
     debouncedLoadEvents() {
         if (this.navigationTimeout) {
             clearTimeout(this.navigationTimeout);
@@ -309,7 +292,6 @@ class Calendar {
         }, 200); // Wait 200ms after last navigation action
     }
 
-    // Debounced navigation methods
     async navigatePrev() {
         if (this.isNavigationBlocked()) return;
         
@@ -337,19 +319,24 @@ class Calendar {
     }
 
     async goToToday() {
-        if (this.isNavigationBlocked()) return;
-        
         const today = new Date();
+
+        if (this.isAuthenticated) {
+            this.openEventModal(today);
+        }
+
         const wasAlreadyToday = (
             this.currentDate.getFullYear() === today.getFullYear() &&
             this.currentDate.getMonth() === today.getMonth()
         );
-        
+
         if (wasAlreadyToday) {
-            console.log('📅 Already viewing current month, skipping API call');
+            console.log('📅 Already viewing current month');
             return;
         }
-        
+
+        if (this.isNavigationBlocked()) return;
+
         this.currentDate = new Date();
         this.debouncedLoadEvents();
         this.updateCurrentMonth();
@@ -415,7 +402,6 @@ class Calendar {
             eventElement.className = `event-item ${event.type}`;
             eventElement.textContent = event.title;
             
-            // Add creator info if available
             if (event.createdBy && event.createdBy.name) {
                 eventElement.title = `${event.title}\nOrganizer: ${event.organizer || event.createdBy.name}`;
             }
@@ -427,7 +413,6 @@ class Calendar {
             day.appendChild(eventElement);
         });
 
-        // Only allow creating events if authenticated
         if (this.isAuthenticated) {
             day.addEventListener('click', () => {
                 this.openEventModal(date);
@@ -525,13 +510,20 @@ class Calendar {
 
         const agendaList = document.getElementById('agendaList');
         const filter = document.getElementById('agendaFilter').value;
-        
+
         let filteredEvents = this.events;
         if (filter !== 'all') {
             filteredEvents = this.events.filter(event => event.type === filter);
         }
 
-        filteredEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const upcomingEvents = filteredEvents.filter(event => new Date(event.date) >= today);
+        const previousEvents = filteredEvents.filter(event => new Date(event.date) < today);
+
+        upcomingEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+        previousEvents.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         agendaList.innerHTML = '';
 
@@ -540,7 +532,30 @@ class Calendar {
             return;
         }
 
-        filteredEvents.forEach(event => {
+        if (upcomingEvents.length > 0) {
+            const upcomingHeader = document.createElement('h3');
+            upcomingHeader.style.cssText = 'color: #2c3e50; font-size: 1.3rem; margin: 2rem 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid #3498db;';
+            upcomingHeader.textContent = 'Upcoming Events';
+            agendaList.appendChild(upcomingHeader);
+
+            upcomingEvents.forEach(event => {
+                agendaList.appendChild(this.createAgendaItem(event));
+            });
+        }
+
+        if (previousEvents.length > 0) {
+            const previousHeader = document.createElement('h3');
+            previousHeader.style.cssText = 'color: #7f8c8d; font-size: 1.3rem; margin: 2rem 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid #95a5a6;';
+            previousHeader.textContent = 'Previous Events';
+            agendaList.appendChild(previousHeader);
+
+            previousEvents.forEach(event => {
+                agendaList.appendChild(this.createAgendaItem(event));
+            });
+        }
+    }
+
+    createAgendaItem(event) {
             const agendaItem = document.createElement('div');
             agendaItem.className = `agenda-item ${event.type}`;
             
@@ -568,8 +583,7 @@ class Calendar {
             `;
 
             agendaItem.addEventListener('click', () => this.showEventDetails(event));
-            agendaList.appendChild(agendaItem);
-        });
+            return agendaItem;
     }
 
     getEventsForDate(date) {
@@ -604,7 +618,6 @@ class Calendar {
         return days[dayIndex];
     }
 
-    // Only allow opening event modal if authenticated
     openEventModal(date = null) {
         if (!this.isAuthenticated) {
             this.showMessage('Please log in to create events', 'error');
@@ -616,12 +629,10 @@ class Calendar {
         const modal = document.getElementById('eventModal');
         const form = document.getElementById('eventForm');
         
-        // Reset all state
         form.reset();
         this.selectedEventId = null;
         this.isEditMode = false;
         
-        // Set date if provided
         if (date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -629,7 +640,6 @@ class Calendar {
             document.getElementById('eventDate').value = `${year}-${month}-${day}`;
         }
         
-        // Update modal for new event
         document.getElementById('modalTitle').textContent = 'Add Event';
         document.getElementById('deleteEventBtn').style.display = 'none';
         document.getElementById('saveEventBtn').textContent = 'Save Event';
@@ -693,10 +703,8 @@ class Calendar {
             ` : ''}
         `;
 
-        // Store the selected event ID for editing
         this.selectedEventId = event.id;
         
-        // Show/hide edit button based on permissions and authentication
         const editBtn = document.getElementById('editEventBtn');
         if (this.isAuthenticated && event.canEdit !== false) {
             editBtn.style.display = 'inline-block';
@@ -734,15 +742,12 @@ class Calendar {
         
         console.log('✏️ Editing event:', event.title, 'ID:', this.selectedEventId);
         
-        // Close details modal
         this.closeEventDetailsModal();
         
-        // Open edit modal with proper state
         const modal = document.getElementById('eventModal');
         
         this.isEditMode = true;
         
-        // Populate form with event data
         document.getElementById('eventTitle').value = event.title || '';
         document.getElementById('eventType').value = event.type || '';
         document.getElementById('eventDate').value = event.date || '';
@@ -751,12 +756,10 @@ class Calendar {
         document.getElementById('eventDescription').value = event.description || '';
         document.getElementById('eventOrganizer').value = event.organizer || '';
         
-        // Update modal for editing
         document.getElementById('modalTitle').textContent = 'Edit Event';
         document.getElementById('deleteEventBtn').style.display = 'inline-block';
         document.getElementById('saveEventBtn').textContent = 'Update Event';
         
-        // Set up delete button with proper event handler
         const deleteBtn = document.getElementById('deleteEventBtn');
         deleteBtn.onclick = (e) => {
             e.preventDefault();
@@ -799,7 +802,6 @@ class Calendar {
             let data;
             
             if (this.isEditMode && this.selectedEventId) {
-                // Update existing event
                 console.log(`✏️ Updating event: ${this.selectedEventId}`);
                 data = await this.apiCall(`/events/${this.selectedEventId}`, {
                     method: 'PUT',
@@ -807,7 +809,6 @@ class Calendar {
                 });
                 console.log('✅ Event updated successfully');
             } else {
-                // Create new event
                 console.log('➕ Creating new event');
                 data = await this.apiCall('/events', {
                     method: 'POST',
@@ -820,7 +821,6 @@ class Calendar {
                 this.showMessage(data.message || 'Event saved successfully!', 'success');
                 this.closeEventModal();
                 
-                // Reload events to get updated data
                 await this.loadEvents();
                 this.render();
             } else {
@@ -864,7 +864,6 @@ class Calendar {
                 this.showMessage('Event deleted successfully', 'success');
                 this.closeEventModal();
                 
-                // Reload events to get updated data
                 await this.loadEvents();
                 this.render();
             } else {
@@ -951,7 +950,6 @@ class Calendar {
 
         messageContainer.appendChild(messageDiv);
 
-        // Auto-remove after delay (longer for warnings)
         const removeDelay = type === 'warning' ? 8000 : 5000;
         setTimeout(() => {
             if (messageDiv.parentNode) {
@@ -968,7 +966,6 @@ class Calendar {
         console.log('🚪 Closing event modal and resetting state');
         document.getElementById('eventModal').classList.remove('show');
         
-        // Reset all state
         this.selectedEventId = null;
         this.isEditMode = false;
     }
@@ -978,7 +975,6 @@ class Calendar {
         document.getElementById('eventDetailsModal').classList.remove('show');
     }
 
-    // Load sample events as fallback for non-authenticated users
     loadSampleEvents() {
         console.log('📅 Loading sample events as fallback');
         return [
@@ -1010,7 +1006,6 @@ class Calendar {
     }
 }
 
-// Global functions for modal closing
 function closeEventModal() {
     if (window.calendar) {
         window.calendar.closeEventModal();
@@ -1023,19 +1018,16 @@ function closeEventDetailsModal() {
     }
 }
 
-// Initialize calendar when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🌟 DOM loaded, initializing calendar...');
     window.calendar = new Calendar();
     
-    // Close modals when clicking outside
     document.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal-overlay')) {
             e.target.classList.remove('show');
         }
     });
     
-    // Add CSS for animations
     if (!document.querySelector('#calendar-animations')) {
         const style = document.createElement('style');
         style.id = 'calendar-animations';

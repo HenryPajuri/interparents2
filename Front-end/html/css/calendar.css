@@ -36,6 +36,10 @@
     gap: 1rem;
 }
 
+.calendar-actions.guest-mode {
+    justify-content: center;
+}
+
 .action-btn {
     background: #95a5a6;
     color: white;

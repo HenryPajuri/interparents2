@@ -22,7 +22,7 @@
                         <li class="dropdown">
                             <a href="#members" class="dropdown-toggle">Members</a>
                             <ul class="dropdown-menu">
-                                <li><a href="#apeee-websites">Parent Associations</a></li>
+                                <li><a href="#members">Parent Associations</a></li>
                                 <li><a href="members.html">InterParents Bureau</a></li>
                             </ul>
                         </li>
@@ -70,25 +70,17 @@
             </section>
 
             <section class="section" id="statutes">
-                <h2>Statutes & Rules</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 style="margin: 0;">Statutes & Rules</h2>
+                    <button id="editStatutesBtn" style="display: none; padding: 0.5rem 1rem; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">✏️ Edit</button>
+                </div>
                 <p>Our organization operates under official statutes and internal rules:</p>
-                <ul style="list-style: none; padding-left: 0;">
-                    <li style="margin-bottom: 0.5rem;">
-                        📄 <a href="pdf/InterParents statutes 2025_RCSL 280825 en-GB.pdf" target="_blank" style="color: #3498db; text-decoration: none;">InterParents Statutes 2025 (English)</a>
-                    </li>
-                    <li style="margin-bottom: 0.5rem;">
-                        📄 <a href="pdf/InterParents statutes 2025_RCSL 280825.pdf" target="_blank" style="color: #3498db; text-decoration: none;">InterParents Statutes 2025 (French)</a>
-                    </li>
-                    <li style="margin-bottom: 0.5rem;">
-                        📄 <a href="pdf/InterParents Rules 2025_RCSL en-GB.pdf" target="_blank" style="color: #3498db; text-decoration: none;">InterParents Rules 2025 (English)</a>
-                    </li>
-                    <li style="margin-bottom: 0.5rem;">
-                        📄 <a href="pdf/InterParents Rules 2025_RCSL.pdf" target="_blank" style="color: #3498db; text-decoration: none;">InterParents Rules 2025 (French)</a>
-                    </li>
+                <ul id="statutesList" style="list-style: none; padding-left: 0;">
+                    <li style="margin-bottom: 0.5rem;">Loading statutes...</li>
                 </ul>
             </section>
 
-            <section class="section" id="apeee-websites">
+            <section class="section" id="members">
                 <h2>Parent Associations (APEEEs)</h2>
                 <p>Visit the websites of the Parent Associations across all 13 European Schools:</p>
 
@@ -148,7 +140,7 @@
                 </div>
             </section>
 
-            <section class="section" id="members">
+            <section class="section" id="eu-schools">
                 <h2>European Schools</h2>
                 <p>The 13 European Schools:</p>
 
@@ -249,6 +241,21 @@
         </div>
     </footer>
 
+    <!-- Edit Statutes Modal -->
+    <div id="editStatutesModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 2rem; border-radius: 8px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <h2 style="margin-top: 0;">Edit Statutes & Rules</h2>
+            <div id="statutesEditor" style="margin: 1rem 0;">
+                <!-- Dynamic form will be inserted here -->
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+                <button id="cancelEditStatutes" style="padding: 0.75rem 1.5rem; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                <button id="saveStatutes" style="padding: 0.75rem 1.5rem; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/script.js"></script>
+    <script src="js/index.js"></script>
 </body>
 </html>

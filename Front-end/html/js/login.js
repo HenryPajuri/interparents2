@@ -1,4 +1,3 @@
-// Login Page JavaScript
 
 class LoginManager {
     constructor() {
@@ -9,7 +8,11 @@ class LoginManager {
         this.passwordToggle = document.getElementById('passwordToggle');
         this.messageDiv = document.getElementById('loginMessage');
 
-        this.API_BASE = 'https://interparents-1.onrender.com/api';
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            this.API_BASE = 'http://localhost:3001/api';
+        } else {
+            this.API_BASE = 'https://interparents.eu/api';
+        }
         this.isLoading = false;
 
         this.init();
@@ -19,10 +22,6 @@ class LoginManager {
         this.bindEvents();
         this.checkExistingAuth();
         this.setupFormValidation();
-
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            document.body.classList.add('production');
-        }
     }
 
     bindEvents() {
@@ -260,35 +259,8 @@ class LoginManager {
     }
 }
 
-function copyCredentials(email, password) {
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-
-    emailInput.value = email;
-    passwordInput.value = password;
-
-    emailInput.dispatchEvent(new Event('input'));
-    passwordInput.dispatchEvent(new Event('input'));
-
-    passwordInput.focus();
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    const loginManager = new LoginManager();
-
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        document.querySelectorAll('.demo-account').forEach(account => {
-            account.style.cursor = 'pointer';
-            account.title = 'Click to use these credentials';
-
-            account.addEventListener('click', () => {
-                const codes = account.querySelectorAll('code');
-                if (codes.length >= 2) {
-                    copyCredentials(codes[0].textContent, codes[1].textContent);
-                }
-            });
-        });
-    }
+    new LoginManager();
 });
 
 window.LoginManager = LoginManager;

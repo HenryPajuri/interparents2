@@ -1,14 +1,16 @@
-// Admin Panel JavaScript - Enhanced with Password Validation
 class AdminPanel {
     constructor() {
-        this.API_BASE = 'https://interparents-1.onrender.com/api';
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            this.API_BASE = 'http://localhost:3001/api';
+        } else {
+            this.API_BASE = 'https://interparents.eu/api';
+        }
         this.user = null;
         this.communications = [];
         this.users = [];
         this.currentDeleteId = null;
         this.currentDeleteUserId = null;
         
-        // Password validation state
         this.passwordValidation = {
             strength: false,
             match: false,
@@ -101,11 +103,9 @@ class AdminPanel {
             this.handleUserCreate(e);
         });
         
-        // Set default publish date to today
         document.getElementById('publishDate').valueAsDate = new Date();
     }
 
-    // NEW: Initialize password validation for user creation
     initializePasswordValidation() {
         const passwordInput = document.getElementById('userPassword');
         const confirmPasswordInput = document.getElementById('userConfirmPassword');
@@ -125,13 +125,11 @@ class AdminPanel {
             });
         }
 
-        // Password toggle functionality
         document.querySelectorAll('.admin-password-toggle').forEach(btn => {
             btn.addEventListener('click', (e) => this.togglePasswordVisibility(e));
         });
     }
 
-    // NEW: Toggle password visibility
     togglePasswordVisibility(e) {
         const button = e.target.closest('.admin-password-toggle');
         const targetId = button.getAttribute('data-target');
@@ -147,19 +145,17 @@ class AdminPanel {
         }
     }
 
-    // NEW: Validate password strength for user creation
     validateUserPasswordStrength() {
         const password = document.getElementById('userPassword').value;
         const strengthDiv = document.getElementById('userPasswordStrength');
         
         const requirements = {
-            length: password.length >= 6,
+            length: password.length >= 8,
             lowercase: /[a-z]/.test(password),
             uppercase: /[A-Z]/.test(password),
             number: /\d/.test(password)
         };
 
-        // Update requirement indicators with animation
         Object.keys(requirements).forEach(req => {
             const element = document.getElementById(`admin-req-${req}`);
             if (element) {
@@ -168,7 +164,6 @@ class AdminPanel {
                 
                 element.classList.toggle('met', isNowMet);
                 
-                // Add animation for newly met requirements
                 if (!wasMet && isNowMet) {
                     element.classList.add('newly-met');
                     setTimeout(() => element.classList.remove('newly-met'), 300);
@@ -176,10 +171,8 @@ class AdminPanel {
             }
         });
 
-        // Store requirements state
         this.passwordValidation.requirements = requirements;
 
-        // Calculate strength
         const metRequirements = Object.values(requirements).filter(Boolean).length;
         let strength = '';
         let strengthClass = '';
@@ -201,13 +194,11 @@ class AdminPanel {
         strengthDiv.textContent = strength;
         strengthDiv.className = `admin-password-strength ${strengthClass}`;
 
-        // Update validation state
         this.passwordValidation.strength = metRequirements >= 2;
 
         return this.passwordValidation.strength;
     }
 
-    // NEW: Validate password confirmation match
     validateUserPasswordMatch() {
         const password = document.getElementById('userPassword').value;
         const confirmPassword = document.getElementById('userConfirmPassword').value;
@@ -228,7 +219,6 @@ class AdminPanel {
         return isMatch;
     }
 
-    // NEW: Update form validation state
     updateFormValidationState() {
         const submitBtn = document.getElementById('userSubmitBtn');
         const passwordInput = document.getElementById('userPassword');
@@ -236,7 +226,6 @@ class AdminPanel {
 
         const isValid = this.passwordValidation.strength && this.passwordValidation.match;
 
-        // Update input styling
         if (passwordInput.value.length > 0) {
             passwordInput.classList.toggle('password-success', this.passwordValidation.strength);
             passwordInput.classList.toggle('password-error', !this.passwordValidation.strength);
@@ -247,24 +236,20 @@ class AdminPanel {
             confirmInput.classList.toggle('password-error', !this.passwordValidation.match);
         }
 
-        // Update submit button styling
         if (passwordInput.value.length > 0 || confirmInput.value.length > 0) {
             submitBtn.classList.toggle('validation-passed', isValid);
             submitBtn.classList.toggle('validation-failed', !isValid);
         }
     }
 
-    // NEW: Clear password validation
     clearPasswordValidation() {
         document.getElementById('userPasswordStrength').textContent = '';
         document.getElementById('userPasswordMatch').textContent = '';
         
-        // Reset requirement indicators
         document.querySelectorAll('.requirement-item').forEach(item => {
             item.classList.remove('met', 'newly-met');
         });
 
-        // Reset validation state
         this.passwordValidation = {
             strength: false,
             match: false,
@@ -276,11 +261,9 @@ class AdminPanel {
             }
         };
 
-        // Reset input styling
         document.getElementById('userPassword').classList.remove('password-success', 'password-error');
         document.getElementById('userConfirmPassword').classList.remove('password-success', 'password-error');
         
-        // Reset submit button styling
         const submitBtn = document.getElementById('userSubmitBtn');
         submitBtn.classList.remove('validation-passed', 'validation-failed');
     }
@@ -295,13 +278,11 @@ class AdminPanel {
     }
 
     switchTab(tabName) {
-        // Update tab buttons
         document.querySelectorAll('.admin-tab').forEach(tab => {
             tab.classList.remove('active');
         });
         document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
 
-        // Update tab content
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.remove('active');
         });
@@ -426,10 +407,10 @@ class AdminPanel {
                 <td>${this.formatFileSize(comm.fileSize)}</td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-edit" onclick="window.open('https://interparents-1.onrender.com/pdf/${comm.filename}', '_blank')">
+                        <button class="btn-edit" onclick="window.open('${this.API_BASE.replace('/api', '')}/pdf/${comm.filename}', '_blank')">
                             View
                         </button>
-                        <button class="btn-delete" onclick="adminPanel.showDeleteModal('${comm._id}', '${comm.title}')">
+                        <button class="btn-delete" onclick="adminPanel.showDeleteModal('${comm.id}', '${comm.title}')">
                             Delete
                         </button>
                     </div>
@@ -494,20 +475,31 @@ class AdminPanel {
         }
     }
 
-    // ========== USER MANAGEMENT METHODS ==========
 
     async loadUsers() {
         try {
+            console.log('Loading users from:', `${this.API_BASE}/users`);
             const response = await fetch(`${this.API_BASE}/users`, {
                 credentials: 'include'
             });
 
+            console.log('Users response status:', response.status);
+
             if (response.ok) {
                 const data = await response.json();
+                console.log('Users data:', data);
                 if (data.success) {
                     this.users = data.users;
+                    console.log('Loaded users count:', this.users.length);
                     this.renderUsers();
+                } else {
+                    console.error('Users fetch unsuccessful:', data);
+                    this.showMessage(data.message || 'Failed to load users', 'error');
                 }
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Failed to load users:', response.status, errorData);
+                this.showMessage(errorData.message || 'Failed to load users', 'error');
             }
         } catch (error) {
             console.error('Error loading users:', error);
@@ -515,11 +507,11 @@ class AdminPanel {
         }
     }
 
-    // UPDATED: Enhanced user creation with password validation
     async handleUserCreate(e) {
         e.preventDefault();
 
-        // Validate password requirements before submission
+        this.hideUserFormMessage();
+
         if (!this.validateUserForm()) {
             return;
         }
@@ -548,17 +540,17 @@ class AdminPanel {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                this.showMessage('User created successfully!', 'success');
+                this.showUserFormMessage('User created successfully!', 'success');
                 e.target.reset();
                 this.clearPasswordValidation();
                 await this.loadUsers();
             } else {
-                this.showMessage(data.message || 'User creation failed', 'error');
+                this.showUserFormMessage(data.message || 'User creation failed', 'error');
             }
 
         } catch (error) {
             console.error('User creation error:', error);
-            this.showMessage('Network error. Please try again.', 'error');
+            this.showUserFormMessage('Network error. Please try again.', 'error');
         } finally {
             submitBtn.disabled = false;
             submitBtnText.style.display = 'inline';
@@ -566,23 +558,42 @@ class AdminPanel {
         }
     }
 
-    // NEW: Validate user creation form
+    showUserFormMessage(message, type) {
+        const messageEl = document.getElementById('userFormMessage');
+        messageEl.textContent = message;
+        messageEl.className = `form-message ${type}`;
+        messageEl.style.display = 'block';
+
+        if (type === 'success') {
+            setTimeout(() => {
+                this.hideUserFormMessage();
+            }, 5000);
+        }
+    }
+
+    hideUserFormMessage() {
+        const messageEl = document.getElementById('userFormMessage');
+        if (messageEl) {
+            messageEl.style.display = 'none';
+        }
+    }
+
     validateUserForm() {
         const password = document.getElementById('userPassword').value;
         const confirmPassword = document.getElementById('userConfirmPassword').value;
 
-        if (!password || password.length < 6) {
-            this.showMessage('Password must be at least 6 characters long', 'error');
+        if (!password || password.length < 8) {
+            this.showUserFormMessage('Password must be at least 8 characters long', 'error');
             return false;
         }
 
         if (!this.passwordValidation.strength) {
-            this.showMessage('Password does not meet minimum strength requirements', 'error');
+            this.showUserFormMessage('Password does not meet minimum strength requirements', 'error');
             return false;
         }
 
         if (password !== confirmPassword) {
-            this.showMessage('Passwords do not match', 'error');
+            this.showUserFormMessage('Passwords do not match', 'error');
             return false;
         }
 
@@ -617,8 +628,8 @@ class AdminPanel {
                 <td>${user.position}</td>
                 <td>
                     <div class="action-buttons">
-                        ${user._id !== this.user.id ? `
-                            <button class="btn-delete" onclick="adminPanel.showDeleteUserModal('${user._id}', '${user.name}')">
+                        ${user.id !== this.user.id ? `
+                            <button class="btn-delete" onclick="adminPanel.showDeleteUserModal('${user.id}', '${user.name}')">
                                 Delete
                             </button>
                         ` : `

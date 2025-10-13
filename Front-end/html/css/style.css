@@ -492,7 +492,7 @@ nav a:hover {
 /* Conference Section */
 .conference-section {
     background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-    color: black;
+    color: white;
     padding: 2rem;
     border-radius: 8px;
     margin: 2rem 0;
@@ -501,6 +501,10 @@ nav a:hover {
 .conference-section h3 {
     margin-bottom: 1rem;
     font-size: 1.5rem;
+}
+
+.conference-section p {
+    color: white;
 }
 
 .webcast-link {

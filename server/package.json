@@ -1,20 +1,16 @@
 {
   "name": "interparents-backend",
-  "version": "1.0.0",
-  "description": "INTERPARENTS Backend API with Authentication, File Management, and Calendar Events",
+  "version": "2.0.0",
+  "description": "INTERPARENTS Backend API with Supabase Authentication and Database",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node scripts/seedUsers.js",
-    "seed-events": "node scripts/seedEvents.js",
-    "seed-all": "npm run seed && npm run seed-events"
+    "populate-supabase": "node scripts/populateSupabaseWithFiles.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
     "express": "^4.18.2",
-    "mongoose": "^7.5.0",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "helmet": "^7.0.0",
@@ -32,7 +28,7 @@
   "keywords": [
     "interparents",
     "authentication",
-    "mongodb",
+    "supabase",
     "express",
     "file-upload",
     "calendar",
