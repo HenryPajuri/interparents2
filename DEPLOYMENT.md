@@ -45,23 +45,23 @@ sudo usermod -aG docker $USER
 
 **Option A: Using FTP/SFTP Client (FileZilla, WinSCP, etc.)**
 1. Connect to your server via SFTP
-2. Create directory: `/var/www/interparents2`
-3. Upload `Front-end` folder → `/var/www/interparents2/Front-end/`
-4. Upload `server` folder → `/var/www/interparents2/server/`
+2. Create directory: `/var/www/interparents`
+3. Upload `Front-end` folder → `/var/www/interparents/Front-end/`
+4. Upload `server` folder → `/var/www/interparents/server/`
    - **EXCLUDE**: `node_modules` folder (will install fresh on server)
    - **EXCLUDE**: `.env` file (will create manually on server)
 
 **Option B: Using SCP/rsync**
 ```bash
 # From your local machine
-scp -r Front-end/ user@your-server:/var/www/interparents2/
-scp -r server/ user@your-server:/var/www/interparents2/
+scp -r Front-end/ user@your-server:/var/www/interparents/
+scp -r server/ user@your-server:/var/www/interparents/
 
 # OR using rsync (excludes node_modules automatically)
 rsync -avz --exclude 'node_modules' --exclude '.env' \
-  ./Front-end/ user@your-server:/var/www/interparents2/Front-end/
+  ./Front-end/ user@your-server:/var/www/interparents/Front-end/
 rsync -avz --exclude 'node_modules' --exclude '.env' \
-  ./server/ user@your-server:/var/www/interparents2/server/
+  ./server/ user@your-server:/var/www/interparents/server/
 ```
 
 ### 3. Configure Environment Variables
@@ -71,20 +71,20 @@ rsync -avz --exclude 'node_modules' --exclude '.env' \
 Upload it to the server:
 ```bash
 # Option A: Via SFTP client
-# Upload the .env.production file to /var/www/interparents2/server/.env
+# Upload the .env.production file to /var/www/interparents/server/.env
 
 # Option B: Via SCP
-scp .env.production user@your-server:/var/www/interparents2/server/.env
+scp .env.production user@your-server:/var/www/interparents/server/.env
 
 # Option C: Create manually on server (if needed)
-cd /var/www/interparents2/server
+cd /var/www/interparents/server
 nano .env
 # Paste the contents from the .env.production file you received
 ```
 
 Secure the file:
 ```bash
-chmod 600 /var/www/interparents2/server/.env
+chmod 600 /var/www/interparents/server/.env
 ```
 
 ### 4. Frontend API URLs (Already Configured)
@@ -110,7 +110,7 @@ server {
     server_name interparents.eu www.interparents.eu;
 
     # Document root for static files
-    root /var/www/interparents2/Front-end/html;
+    root /var/www/interparents/Front-end/html;
     index index.html;
 
     # Security headers
@@ -192,7 +192,7 @@ sudo certbot --nginx -d interparents.eu -d www.interparents.eu
 ### 7. Start Backend with PM2
 
 ```bash
-cd /var/www/interparents2/server
+cd /var/www/interparents/server
 
 # Install dependencies
 npm install --production
@@ -252,7 +252,7 @@ Your Supabase database is already configured. Ensure:
 1. Upload new files via FTP/SFTP (overwrite existing files)
 2. SSH into server and restart:
 ```bash
-cd /var/www/interparents2/server
+cd /var/www/interparents/server
 docker-compose down
 docker-compose up -d --build
 ```
@@ -260,7 +260,7 @@ docker-compose up -d --build
 ### Backup Strategy
 
 **Database**: Supabase handles automatic backups
-**Files**: Backup `/var/www/interparents2/server/data/documents` directory regularly
+**Files**: Backup `/var/www/interparents/server/data/documents` directory regularly
 
 ```bash
 # Create backup script
@@ -273,7 +273,7 @@ BACKUP_DIR="/backups/interparents"
 DATE=$(date +%Y%m%d_%H%M%S)
 
 # Backup PDF files
-tar -czf $BACKUP_DIR/pdf_backup_$DATE.tar.gz /var/www/interparents2/server/data/documents
+tar -czf $BACKUP_DIR/pdf_backup_$DATE.tar.gz /var/www/interparents/server/data/documents
 
 # Keep only last 30 days of backups
 find $BACKUP_DIR -name "pdf_backup_*.tar.gz" -mtime +30 -delete
@@ -298,7 +298,7 @@ docker-compose logs -f frontend
 ### Restart Services
 
 ```bash
-cd /var/www/interparents2/server
+cd /var/www/interparents/server
 docker-compose restart
 ```
 

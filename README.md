@@ -13,64 +13,63 @@ A production-ready web application for managing parent association activities, e
 
 ## Architecture
 
-- **Frontend**: Static HTML/CSS/JS (Nginx)
-- **Backend**: Node.js/Express API
-- **Database**: Supabase PostgreSQL
+- **Frontend**: Static HTML/CSS/JS served by Nginx
+- **Backend**: Node.js/Express API (Port 3001)
+- **Database**: Supabase PostgreSQL (Cloud-hosted)
 - **Authentication**: Supabase Auth with Row Level Security (RLS)
+- **Process Manager**: PM2 for backend auto-restart and monitoring
+- **Web Server**: Nginx for static files and reverse proxy
 
-## Prerequisites
+## Production Deployment
 
-- Node.js 18+ LTS
-- Supabase account and project
-- (Optional) Docker and Docker Compose
+We provide two deployment options:
 
-## Quick Start - Development
+### Option 1: PM2 + Nginx Deployment (Recommended)
+See **[DEPLOYMENT_NO_DOCKER.md](DEPLOYMENT_NO_DOCKER.md)** for complete deployment guide.
 
-### 1. Clone the Repository
+**Best for:** Traditional hosting, VPS, Keyweb servers
 
-```bash
-git clone https://github.com/YOUR_USERNAME/interparents2.git
-cd interparents2
-```
+**Features:**
+- PM2 process management with auto-restart
+- Nginx serving static files + reverse proxy
+- SSL with Let's Encrypt
+- Lower resource usage
 
-### 2. Setup Backend
+### Option 2: Docker Deployment
+See **[DEPLOYMENT.md](DEPLOYMENT.md)** for Docker-based deployment.
 
-```bash
-cd server
+**Best for:** Containerized environments, Docker-enabled servers
 
-# Install dependencies
-npm install
+## Quick Deployment Overview
 
-# Create environment file from example
-cp .env.example .env
+### Prerequisites
+1. Linux server (Ubuntu/Debian recommended)
+2. Node.js 18+ LTS
+3. Nginx web server
+4. Supabase project (already created)
+5. Domain name pointed to server
 
-# Edit .env and add your Supabase credentials
-nano .env
-```
+### Deployment Steps
 
-**Required environment variables:**
-```bash
-SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-SESSION_SECRET=generate-a-random-string
-```
+1. **Upload application files** via SFTP/FTP to `/var/www/interparents/`
+2. **Configure environment** - Upload `.env.production` file (provided separately)
+3. **Install dependencies** - Run `npm install --production` in server directory
+4. **Start backend** - Use PM2 to start and manage Node.js process
+5. **Configure Nginx** - Set up reverse proxy and static file serving
+6. **Install SSL** - Use Certbot for Let's Encrypt certificates
+7. **Verify deployment** - Test frontend, API, and login
 
-Generate a secure session secret:
-```bash
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-```
+See deployment guides for detailed step-by-step instructions.
 
-### 3. Setup Supabase Database
+## Database Setup
 
-1. Go to your Supabase project: https://app.supabase.com
-2. Navigate to **SQL Editor**
-3. Copy and run the schema from `server/SUPABASE_FULL_SCHEMA.sql`
-4. Create your first admin user:
-   - Go to **Authentication → Users**
-   - Click "Add user" → "Create new user"
-   - Check "Auto Confirm User"
-   - After creation, run this SQL:
+The application uses **Supabase PostgreSQL** (cloud-hosted database).
+
+### Initial Setup
+1. Create Supabase project at https://supabase.com
+2. Run SQL schema from `SUPABASE_FULL_SCHEMA.sql` in Supabase SQL Editor
+3. Create first admin user via Supabase Dashboard → Authentication → Users
+4. Update user role to admin:
    ```sql
    UPDATE user_profiles
    SET role = 'admin',
@@ -80,159 +79,166 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
    WHERE email = 'your-admin@email.com';
    ```
 
-### 4. Start Development Servers
-
-**Backend:**
-```bash
-cd server
-npm run dev
-```
-Backend runs at: http://localhost:3001
-
-**Frontend:**
-```bash
-# In a new terminal, from project root
-npx http-server Front-end/html -p 8080 -c-1
-```
-Frontend runs at: http://localhost:8080
-
-### 5. Login
-
-Visit http://localhost:8080/login.html and login with your admin credentials.
-
-## Quick Start - Docker
-
-```bash
-cd server
-
-# Make sure .env file is configured
-docker-compose up -d --build
-
-# View logs
-docker-compose logs -f
-```
-
-Services:
-- Frontend: http://localhost:8080
-- Backend: http://localhost:3001
-
-## Deployment
-
-We provide two deployment guides:
-
-### Option 1: Docker Deployment
-See [DEPLOYMENT.md](DEPLOYMENT.md) for Docker-based deployment to production servers.
-
-**Best for:** Servers with Docker support, containerized environments
-
-### Option 2: Direct Deployment (No Docker)
-See [DEPLOYMENT_NO_DOCKER.md](DEPLOYMENT_NO_DOCKER.md) for PM2 + Nginx deployment.
-
-**Best for:** Traditional hosting, VPS, Keyweb servers
-
 ## Security Features
 
 - Supabase Authentication with JWT tokens
 - Row Level Security (RLS) policies on all database tables
 - HTTP-only secure cookies
 - Helmet.js security headers
-- Rate limiting (300 requests per 15 minutes)
+- Rate limiting (300 requests per 15 minutes, 15 for login)
 - Input validation with express-validator
 - No hardcoded credentials
 - Environment-based configuration
+- CORS protection
 
 ## Project Structure
 
 ```
-interparents2/
+interparents/
 ├── Front-end/
 │   └── html/
 │       ├── css/           # Stylesheets
 │       ├── js/            # Client-side JavaScript
 │       ├── images/        # Static images
-│       └── *.html         # HTML pages
+│       └── *.html         # HTML pages (index, login, dashboard, etc.)
 ├── server/
-│   ├── config/            # Configuration files
-│   ├── middleware/        # Express middleware
-│   ├── routes/            # API routes
+│   ├── config/            # Supabase client, environment validation
+│   ├── middleware/        # Authentication middleware
+│   ├── routes/            # API routes (auth, users, events, communications)
 │   ├── utils/             # Utility functions
 │   ├── data/
 │   │   └── documents/     # Uploaded PDF files
-│   ├── server.js          # Main server file
+│   ├── server.js          # Main server file (100% Supabase)
 │   ├── package.json
 │   ├── .env.example       # Environment template
-│   ├── Dockerfile
-│   └── docker-compose.yml
+│   └── .env.production    # Production environment (not in git)
 ├── DEPLOYMENT.md          # Docker deployment guide
-├── DEPLOYMENT_NO_DOCKER.md # PM2 deployment guide
-└── README.md
+├── DEPLOYMENT_NO_DOCKER.md # PM2 + Nginx deployment guide (recommended)
+├── SUPABASE_FULL_SCHEMA.sql # Complete database schema
+└── README.md              # This file
 ```
 
-## Development
+## API Endpoints
 
-### Available Scripts
-
-```bash
-# Backend
-npm start       # Start production server
-npm run dev     # Start development server with auto-reload
-```
-
-### API Endpoints
-
-**Authentication:**
+### Authentication (`/api/auth/*`)
 - `POST /api/auth/login` - User login
 - `POST /api/auth/logout` - User logout
-- `GET /api/auth/me` - Get current user
+- `GET /api/auth/me` - Get current user profile
+- `PUT /api/auth/change-password` - Change password
+- `POST /api/auth/forgot-password` - Request password reset
+- `POST /api/auth/reset-password` - Reset password with token
 
-**Events:**
-- `GET /api/events` - List all events
+### Events (`/api/events`)
+- `GET /api/events` - List all events (filtered by role)
 - `POST /api/events` - Create event (admin/executive)
 - `PUT /api/events/:id` - Update event (admin/executive)
-- `DELETE /api/events/:id` - Delete event (admin)
+- `DELETE /api/events/:id` - Delete event (admin/executive)
 
-**Users:**
-- `GET /api/users` - List all users (admin)
-- `POST /api/users` - Create user (admin)
-- `PUT /api/users/:id` - Update user (admin)
+### Users (`/api/users`)
+- `GET /api/users` - List all users (admin only)
+- `POST /api/users` - Create user (admin only)
+- `PUT /api/users/:id` - Update user (admin only)
+- `DELETE /api/users/:id` - Delete user (admin only)
 
-## Environment Variables Reference
+### Communications (`/api/communications`)
+- `GET /api/communications` - List all documents
+- `POST /api/communications` - Upload PDF (admin/executive)
+- `PUT /api/communications/:id` - Update metadata (admin/executive)
+- `DELETE /api/communications/:id` - Delete document (admin/executive)
 
-See [.env.example](server/.env.example) for complete list of configuration options.
+### Static Files
+- `/pdf/*` - PDF document downloads
+- `/assets/*` - Static assets
 
-**Required:**
-- `NODE_ENV` - Environment (development/production)
-- `PORT` - Server port
-- `SUPABASE_URL` - Supabase project URL
+## Environment Configuration
+
+Production environment variables are configured in `.env.production` file:
+
+**Required Variables:**
+- `NODE_ENV=production`
+- `PORT=3001`
+- `SUPABASE_URL` - Your Supabase project URL
 - `SUPABASE_ANON_KEY` - Supabase anonymous key
 - `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
-- `SESSION_SECRET` - Random string for sessions
-- `FRONTEND_URL` - Frontend URL for CORS
+- `SESSION_SECRET` - Random 64-character string
+- `FRONTEND_URL=https://interparents.eu`
+- `MAX_FILE_SIZE_MB=10`
 
-**Optional:**
-- `MAX_FILE_SIZE` - Upload size limit
-- `SMTP_*` - Email configuration (future feature)
+See [.env.example](server/.env.example) for complete reference.
 
 ## Database Schema
 
-The application uses Supabase PostgreSQL with the following main tables:
+The application uses **100% Supabase PostgreSQL** with the following tables:
 
-- `user_profiles` - User information and roles
-- `events` - Calendar events
-- `communications` - Messages and announcements
-- `event_attendees` - Event participation tracking
-- `event_attachments` - Event-related files
+- `user_profiles` - User information and roles (linked to Supabase Auth)
+- `events` - Calendar events with creator tracking
+- `communications` - Document metadata (PDFs)
+- `event_attendees` - Event participation tracking (optional, future)
+- `event_attachments` - Event-related files (optional, future)
 
-All tables have Row Level Security (RLS) enabled.
+**All tables have Row Level Security (RLS) enabled** for database-level permission enforcement.
 
-## License
+## Password Requirements
 
-This project is licensed under the MIT License.
+- Minimum 8 characters
+- Must contain at least 3 of: lowercase, uppercase, number, special character
+- Enforced at both application and Supabase level
+
+## Maintenance
+
+### Updating the Application
+1. Upload new files via SFTP/FTP (overwrite existing)
+2. SSH into server and run:
+   ```bash
+   cd /var/www/interparents/server
+   npm install --production
+   pm2 restart interparents-backend
+   ```
+
+### Viewing Logs
+```bash
+# Backend logs
+pm2 logs interparents-backend
+
+# Nginx logs
+sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/error.log
+```
+
+### Monitoring
+```bash
+# Check backend status
+pm2 status
+
+# Real-time monitoring
+pm2 monit
+```
+
+### Backup
+- **Database**: Supabase handles automatic backups
+- **PDF Files**: Regular backups of `/var/www/interparents/server/data/documents/`
+- **Environment**: Secure backup of `.env` file
+
+See deployment guides for automated backup scripts.
+
+## Support & Documentation
+
+- **Deployment Guide (No Docker)**: [DEPLOYMENT_NO_DOCKER.md](DEPLOYMENT_NO_DOCKER.md)
+- **Deployment Guide (Docker)**: [DEPLOYMENT.md](DEPLOYMENT.md)
+- **Database Schema**: [SUPABASE_FULL_SCHEMA.sql](SUPABASE_FULL_SCHEMA.sql)
+- **Architecture Guide**: [CLAUDE.md](CLAUDE.md)
+
+## Production URLs
+
+- **Frontend**: https://interparents.eu
+- **Backend API**: https://interparents.eu/api
+- **PDF Files**: https://interparents.eu/pdf/{filename}
+- **Login Page**: https://interparents.eu/login.html
 
 ## Version
 
 - **Version**: 2.0.0
-- **Last Updated**: 2025-10-09
+- **Last Updated**: 2025-10-13
 - **Node.js**: 18+ LTS
 - **Database**: Supabase PostgreSQL
-
+- **License**: MIT
